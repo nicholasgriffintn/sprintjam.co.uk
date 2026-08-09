@@ -22,11 +22,12 @@
     "generate:types": "wrangler types --include-runtime=false"
   },
   "dependencies": {
-    "@ngriffin_uk/auth-core": "^0.4.2",
+    "@ngriffin_uk/auth-core": "^0.5.1",
     "@ngriffin_uk/auth-encoding": "^0.2.4",
-    "@ngriffin_uk/auth-magic-link": "^0.0.4",
-    "@ngriffin_uk/auth-otp": "^0.4.2",
-    "@ngriffin_uk/auth-webauthn": "^0.4.4",
+    "@ngriffin_uk/auth-magic-link": "^0.0.6",
+    "@ngriffin_uk/auth-otp": "^0.4.4",
+    "@ngriffin_uk/auth-protocol": "^0.1.1",
+    "@ngriffin_uk/auth-webauthn": "^0.4.6",
     "@sentry/cloudflare": "^10.64.0",
     "@sprintjam/db": "workspace:*",
     "@sprintjam/services": "workspace:*",
@@ -35,11 +36,11 @@
     "drizzle-orm": "0.45.2"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "5.20260707.1",
-    "@vitest/coverage-v8": "4.0.16",
+    "@cloudflare/workers-types": "4.20260702.1",
+    "@vitest/coverage-v8": "4.1.10",
     "drizzle-kit": "0.31.8",
     "typescript": "5.9.3",
-    "vitest": "4.0.16",
+    "vitest": "4.1.10",
     "wrangler": "4.107.1"
   }
 }

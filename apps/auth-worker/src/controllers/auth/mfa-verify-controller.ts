@@ -1,8 +1,14 @@
-import { AuthError, type AuthFlowResult } from "@ngriffin_uk/auth-core";
+import { AuthError } from "@ngriffin_uk/auth-core";
+import type { AuthFlowResult } from "@ngriffin_uk/auth-protocol";
 import type { WebAuthnAuthenticationResponse } from "@ngriffin_uk/auth-webauthn";
 import type { AuthWorkerEnv } from "@sprintjam/types";
 
 import { WorkspaceAuthRepository } from "../../repositories/workspace-auth";
+import {
+  createAuthChallengeErrorResponse,
+  readChallengeUserId,
+  requireChallengeMode,
+} from "../../lib/auth-challenge";
 import { createAuthResponse, getRequestMeta } from "../../lib/auth-helpers";
 import { jsonError, jsonResponse } from "../../lib/response";
 import {
@@ -31,8 +37,8 @@ export async function startMfaVerifyController(
       "sprintjam",
       ["mfa_selection"],
     );
-    requireMode(selection.payload, "verify");
-    const userId = payloadUserId(selection.payload);
+    requireChallengeMode(selection.payload, "verify");
+    const userId = readChallengeUserId(selection.payload);
     if (body.method === "totp") {
       const result =
         await createSprintJamOtpAuth(env).providers.otp.createChallenge(userId);
@@ -57,7 +63,7 @@ export async function startMfaVerifyController(
       ).providers.webauthn.startAuthentication(userId),
     );
   } catch (error) {
-    return sharedAuthError(error);
+    return createAuthChallengeErrorResponse(error);
   }
 }
 
@@ -164,31 +170,6 @@ export async function verifyMfaController(
       },
     });
   } catch (error) {
-    return sharedAuthError(error);
+    return createAuthChallengeErrorResponse(error);
   }
-}
-
-function payloadUserId(payload: Readonly<Record<string, unknown>>): string {
-  const value = payload["userId"];
-  if (typeof value !== "string") throw new AuthError("challenge_mismatch");
-  return value;
-}
-
-function requireMode(
-  payload: Readonly<Record<string, unknown>>,
-  mode: "setup" | "verify",
-): void {
-  if (payload["mode"] !== mode) throw new AuthError("challenge_mismatch");
-}
-
-function sharedAuthError(error: unknown): Response {
-  if (error instanceof AuthError) {
-    const expired = error.code === "challenge_expired";
-    return jsonError(
-      expired ? "Authentication challenge expired" : error.message,
-      expired ? 401 : 400,
-      error.code,
-    );
-  }
-  throw error;
 }

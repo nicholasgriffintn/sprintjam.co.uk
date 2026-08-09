@@ -149,8 +149,10 @@ export function createStructuredVote(
   criteriaScores: Record<string, number>,
   votingCriteria: VotingCriterion[] = getDefaultVotingCriteria(),
 ): StructuredVote {
-  const calculatedStoryPoints =
-    calculateStoryPointsFromStructuredVote(criteriaScores, votingCriteria);
+  const calculatedStoryPoints = calculateStoryPointsFromStructuredVote(
+    criteriaScores,
+    votingCriteria,
+  );
   const { weightedScore, appliedConversionRules, contributions } =
     computeWeightedScoreAndRules(criteriaScores, votingCriteria);
 

@@ -20,7 +20,7 @@ export async function getCurrentUserController(
   }
 
   const repo = new WorkspaceAuthRepository(env.DB);
-  const session = await createSprintJamAuth(env).authenticate(token);
+  const session = await createSprintJamAuth(env).touchSession(token);
   if (!session) {
     return jsonError("Invalid or expired session", 401, "invalid_session");
   }
@@ -85,7 +85,7 @@ export async function updateCurrentUserProfileController(
   }
 
   const repo = new WorkspaceAuthRepository(env.DB);
-  const session = await createSprintJamAuth(env).authenticate(token);
+  const session = await createSprintJamAuth(env).touchSession(token);
   if (!session) {
     return jsonError("Invalid or expired session", 401, "invalid_session");
   }

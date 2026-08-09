@@ -1,7 +1,6 @@
 import { AuthError } from "@ngriffin_uk/auth-core";
 import { sendVerificationCodeEmail } from "@sprintjam/services";
 import type { AuthWorkerEnv } from "@sprintjam/types";
-import { extractDomain } from "@sprintjam/utils";
 
 import { WorkspaceAuthRepository } from "../../repositories/workspace-auth";
 import { jsonError, jsonResponse } from "../../lib/response";
@@ -9,10 +8,13 @@ import {
   EMAIL_REGEX,
   enforceEmailAndIpRateLimit,
   getRequestMeta,
+  isMfaMethod,
 } from "../../lib/auth-helpers";
 import { createSprintJamMagicLinkAuth } from "../../lib/shared-auth";
 import {
+  getWorkspaceMagicLinkEligibility,
   resolveWorkspaceAuthUser,
+  type WorkspaceMagicLinkEligibility,
   WorkspaceAccessError,
 } from "../../lib/workspace-auth-user";
 
@@ -38,8 +40,33 @@ export async function requestMagicLinkController(
   if (rateLimitResponse) return rateLimitResponse;
 
   const repo = new WorkspaceAuthRepository(env.DB);
-  const eligibility = await getEligibility(repo, email);
   const { ip, userAgent } = getRequestMeta(request);
+  let eligibility: WorkspaceMagicLinkEligibility;
+  try {
+    eligibility = await getWorkspaceMagicLinkEligibility(repo, email);
+  } catch (error) {
+    console.error("Failed to check workspace eligibility.", error);
+    try {
+      await repo.logAuditEvent({
+        email,
+        event: "magic_link_request",
+        status: "failure",
+        reason: "domain_check_failed",
+        ip,
+        userAgent,
+      });
+    } catch (auditError) {
+      console.error(
+        "Failed to record workspace eligibility failure.",
+        auditError,
+      );
+    }
+    return jsonError(
+      "Service temporarily unavailable",
+      503,
+      "workspace_eligibility_unavailable",
+    );
+  }
   if (!eligibility.allowed) {
     await repo.logAuditEvent({
       email,
@@ -194,28 +221,4 @@ export async function verifyCodeController(
     }
     throw error;
   }
-}
-
-async function getEligibility(
-  repo: WorkspaceAuthRepository,
-  email: string,
-): Promise<{ readonly allowed: boolean; readonly reason: string }> {
-  const domain = extractDomain(email);
-  const [isDomainAllowed, pendingInvite, activeMembership] = await Promise.all([
-    repo.isDomainAllowed(domain),
-    repo.getPendingWorkspaceInviteByEmail(email),
-    repo.getActiveOrganisationMembershipByEmail(email),
-  ]);
-  return {
-    allowed: Boolean(isDomainAllowed || pendingInvite || activeMembership),
-    reason: pendingInvite
-      ? "code_sent_for_invite"
-      : activeMembership
-        ? "code_sent_for_existing_member"
-        : "code_sent",
-  };
-}
-
-function isMfaMethod(value: string): value is "totp" | "webauthn" {
-  return value === "totp" || value === "webauthn";
 }

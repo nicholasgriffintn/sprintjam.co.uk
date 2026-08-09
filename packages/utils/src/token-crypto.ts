@@ -1,3 +1,5 @@
+import { isRecord } from "./object";
+
 const encoder = new TextEncoder();
 const decoder = new TextDecoder();
 
@@ -44,11 +46,11 @@ function parsePayload(payload: string): EncryptedTokenPayload {
     throw new Error("Malformed token payload");
   }
 
-  if (typeof parsed !== "object" || parsed === null) {
+  if (!isRecord(parsed)) {
     throw new Error("Invalid token structure");
   }
 
-  const candidate = parsed as Record<string, unknown>;
+  const candidate = parsed;
   if (
     typeof candidate.iv !== "string" ||
     typeof candidate.salt !== "string" ||
@@ -105,7 +107,7 @@ export class TokenCipher {
     );
   }
 
-  async encrypt(value: string): Promise<string> {
+  async encrypt(value: string, additionalData?: string): Promise<string> {
     const saltBuffer = new ArrayBuffer(SALT_LENGTH);
     const salt = new Uint8Array(saltBuffer);
     crypto.getRandomValues(salt);
@@ -114,7 +116,13 @@ export class TokenCipher {
     crypto.getRandomValues(iv);
     const key = await this.deriveKey(salt);
     const encrypted = await crypto.subtle.encrypt(
-      { name: ALGO, iv },
+      {
+        name: ALGO,
+        iv,
+        ...(additionalData
+          ? { additionalData: encoder.encode(additionalData) }
+          : {}),
+      },
       key,
       encoder.encode(value),
     );
@@ -131,7 +139,7 @@ export class TokenCipher {
     return JSON.stringify(payload);
   }
 
-  async decrypt(payload: string): Promise<string> {
+  async decrypt(payload: string, additionalData?: string): Promise<string> {
     const decoded = parsePayload(payload);
 
     if (decoded.v !== VERSION) {
@@ -157,7 +165,13 @@ export class TokenCipher {
     let decrypted: ArrayBuffer;
     try {
       decrypted = await crypto.subtle.decrypt(
-        { name: ALGO, iv },
+        {
+          name: ALGO,
+          iv,
+          ...(additionalData
+            ? { additionalData: encoder.encode(additionalData) }
+            : {}),
+        },
         key,
         cipherBytes,
       );

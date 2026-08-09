@@ -31,7 +31,7 @@ export async function authenticateRequest(
   }
 
   const repo = new WorkspaceAuthRepository(db);
-  const result = await createSprintJamAuth({ DB: db }).authenticate(token);
+  const result = await createSprintJamAuth({ DB: db }).touchSession(token);
 
   if (!result) {
     return { status: "error", code: "expired" };

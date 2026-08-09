@@ -11,7 +11,8 @@ export function getSitemapEntries(origin: string): SitemapEntry[] {
     if (!sitemap) {
       return [];
     }
-    const pathname = typeof route.path === "string" ? route.path : route.path({});
+    const pathname =
+      typeof route.path === "string" ? route.path : route.path({});
 
     return [
       {

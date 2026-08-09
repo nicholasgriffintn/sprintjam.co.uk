@@ -20,9 +20,9 @@
     "@sprintjam/utils": "workspace:*"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "5.20260707.1",
+    "@cloudflare/workers-types": "4.20260702.1",
     "typescript": "5.9.3",
-    "vitest": "4.0.16",
+    "vitest": "4.1.10",
     "wrangler": "4.107.1"
   }
 }

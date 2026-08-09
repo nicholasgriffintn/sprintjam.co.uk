@@ -233,9 +233,9 @@ describe("Structured Voting Calculations", () => {
 
       expect(vote.percentageScore).toBeCloseTo(19.05, 1);
       expect(vote.appliedConversionRules).toHaveLength(0);
-      expect(vote.contributions?.map((contribution) => contribution.id)).toEqual(
-        ["complexity", "confidence", "volume", "risk"],
-      );
+      expect(
+        vote.contributions?.map((contribution) => contribution.id),
+      ).toEqual(["complexity", "confidence", "volume", "risk"]);
     });
   });
 

@@ -3,9 +3,7 @@
   "name": "sprintjam-wheel-worker",
   "main": "src/index.ts",
   "compatibility_date": "2026-06-16",
-  "compatibility_flags": [
-    "nodejs_compat"
-  ],
+  "compatibility_flags": ["nodejs_compat"],
   "cache": {
     "enabled": false
   },
@@ -65,18 +63,14 @@
   "rules": [
     {
       "type": "Text",
-      "globs": [
-        "**/*.sql"
-      ],
+      "globs": ["**/*.sql"],
       "fallthrough": true
     }
   ],
   "migrations": [
     {
       "tag": "v1",
-      "new_sqlite_classes": [
-        "WheelRoom"
-      ]
+      "new_sqlite_classes": ["WheelRoom"]
     }
   ],
   "observability": {

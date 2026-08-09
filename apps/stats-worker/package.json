@@ -22,10 +22,10 @@
     "drizzle-orm": "0.45.2"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "5.20260707.1",
-    "@vitest/coverage-v8": "4.0.16",
+    "@cloudflare/workers-types": "4.20260702.1",
+    "@vitest/coverage-v8": "4.1.10",
     "typescript": "5.9.3",
-    "vitest": "4.0.16",
+    "vitest": "4.1.10",
     "wrangler": "4.107.1"
   }
 }

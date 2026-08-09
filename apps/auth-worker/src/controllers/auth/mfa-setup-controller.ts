@@ -1,10 +1,20 @@
-import { AuthError, type AuthFlowResult } from "@ngriffin_uk/auth-core";
 import { createRecoveryCodes, hashRecoveryCode } from "@ngriffin_uk/auth-otp";
+import type { AuthFlowResult } from "@ngriffin_uk/auth-protocol";
 import type { WebAuthnRegistrationResponse } from "@ngriffin_uk/auth-webauthn";
 import type { AuthWorkerEnv } from "@sprintjam/types";
 
 import { WorkspaceAuthRepository } from "../../repositories/workspace-auth";
-import { createAuthResponse, getRequestMeta } from "../../lib/auth-helpers";
+import {
+  attachSelectionToken,
+  createAuthChallengeErrorResponse,
+  readChallengeEmail,
+  readChallengeUserId,
+  requireChallengeMode,
+} from "../../lib/auth-challenge";
+import {
+  createAuthenticatedFlowResponse,
+  getRequestMeta,
+} from "../../lib/auth-helpers";
 import { jsonError, jsonResponse } from "../../lib/response";
 import {
   createSprintJamAuth,
@@ -27,26 +37,26 @@ export async function startMfaSetupController(
 
   try {
     const selection = await readSetupSelection(env, body.challengeToken);
-    const userId = payloadUserId(selection.payload);
+    const userId = readChallengeUserId(selection.payload);
     if (body.method === "totp") {
       const auth = createSprintJamOtpAuth(env);
       const result = await auth.providers.otp.startSetup({
         userId,
-        accountName: payloadEmail(selection.payload),
+        accountName: readChallengeEmail(selection.payload),
       });
-      return jsonResponse(withSelectionToken(result, body.challengeToken));
+      return jsonResponse(attachSelectionToken(result, body.challengeToken));
     }
 
     const auth = createSprintJamWebAuthnAuth(request, env);
-    const email = payloadEmail(selection.payload);
+    const email = readChallengeEmail(selection.payload);
     const result = await auth.providers.webauthn.startRegistration({
       userId,
       userName: email,
       displayName: email,
     });
-    return jsonResponse(withSelectionToken(result, body.challengeToken));
+    return jsonResponse(attachSelectionToken(result, body.challengeToken));
   } catch (error) {
-    return sharedAuthError(error);
+    return createAuthChallengeErrorResponse(error);
   }
 }
 
@@ -72,8 +82,8 @@ export async function verifyMfaSetupController(
       "sprintjam",
       ["mfa_selection"],
     );
-    requireMode(selection.payload, "setup");
-    const expectedUserId = payloadUserId(selection.payload);
+    requireChallengeMode(selection.payload, "setup");
+    const expectedUserId = readChallengeUserId(selection.payload);
     const reset = selection.payload["reset"] === true;
     let result: AuthFlowResult<SprintJamAuthUser>;
     let recoveryCodes: string[] | undefined;
@@ -124,9 +134,13 @@ export async function verifyMfaSetupController(
       ip,
       userAgent,
     });
-    return authenticatedResponse(result, recoveryCodes);
+    return createAuthenticatedFlowResponse(
+      result,
+      "MFA setup did not complete",
+      recoveryCodes,
+    );
   } catch (error) {
-    return sharedAuthError(error);
+    return createAuthChallengeErrorResponse(error);
   }
 }
 
@@ -136,80 +150,6 @@ async function readSetupSelection(env: AuthWorkerEnv, token: string) {
     "sprintjam",
     ["mfa_selection"],
   );
-  requireMode(selection.payload, "setup");
+  requireChallengeMode(selection.payload, "setup");
   return selection;
-}
-
-function withSelectionToken(
-  result: AuthFlowResult<SprintJamAuthUser>,
-  selectionToken: string,
-) {
-  if (
-    result.status !== "mfa_setup_required" &&
-    result.status !== "webauthn_challenge_required"
-  ) {
-    throw new AuthError("unsupported_operation");
-  }
-  return {
-    ...result,
-    challenge: {
-      ...result.challenge,
-      parameters: {
-        ...result.challenge.parameters,
-        selectionToken,
-      },
-    },
-  };
-}
-
-function authenticatedResponse(
-  result: AuthFlowResult<SprintJamAuthUser>,
-  recoveryCodes?: string[],
-): Response {
-  if (result.status !== "authenticated") {
-    return jsonError("MFA setup did not complete", 500);
-  }
-  const user = result.session.user;
-  return createAuthResponse({
-    sessionToken: result.session.token,
-    expiresAt: result.session.expiresAt.getTime(),
-    user: {
-      id: Number(user.id),
-      email: user.email,
-      name: user.name,
-      organisationId: user.organisationId,
-    },
-    ...(recoveryCodes ? { recoveryCodes } : {}),
-  });
-}
-
-function payloadUserId(payload: Readonly<Record<string, unknown>>): string {
-  const value = payload["userId"];
-  if (typeof value !== "string") throw new AuthError("challenge_mismatch");
-  return value;
-}
-
-function payloadEmail(payload: Readonly<Record<string, unknown>>): string {
-  const value = payload["email"];
-  if (typeof value !== "string") throw new AuthError("challenge_mismatch");
-  return value;
-}
-
-function requireMode(
-  payload: Readonly<Record<string, unknown>>,
-  mode: "setup" | "verify",
-): void {
-  if (payload["mode"] !== mode) throw new AuthError("challenge_mismatch");
-}
-
-function sharedAuthError(error: unknown): Response {
-  if (error instanceof AuthError) {
-    const expired = error.code === "challenge_expired";
-    return jsonError(
-      expired ? "Authentication challenge expired" : error.message,
-      expired ? 401 : 400,
-      error.code,
-    );
-  }
-  throw error;
 }

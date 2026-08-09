@@ -39,9 +39,7 @@ export function createSprintJamOtpStore(
               eq(mfaCredentials.type, "totp"),
             ),
           ),
-        db
-          .delete(mfaRecoveryCodes)
-          .where(eq(mfaRecoveryCodes.userId, userId)),
+        db.delete(mfaRecoveryCodes).where(eq(mfaRecoveryCodes.userId, userId)),
         db.insert(mfaCredentials).values({
           userId,
           type: "totp",
@@ -174,10 +172,7 @@ export function createSprintJamWebAuthnStore(d1: D1Database): WebAuthnStore {
 
 type AuthDatabase = ReturnType<typeof drizzle>;
 
-async function findWebAuthnRow(
-  db: AuthDatabase,
-  credentialId: string,
-) {
+async function findWebAuthnRow(db: AuthDatabase, credentialId: string) {
   return db
     .select({
       credentialId: mfaCredentials.credentialId,

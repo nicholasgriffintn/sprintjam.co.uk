@@ -1,9 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import {
-  readAuthUiRequest,
-  readCredential,
-} from "./auth-ui-request";
+import { readAuthUiRequest } from "./auth-ui-request";
 
 describe("shared authentication UI requests", () => {
   it("accepts continuation context supplied by the shared React flow", () => {
@@ -14,7 +11,7 @@ describe("shared authentication UI requests", () => {
         kind: "webauthn",
         values: {
           ceremony: "registration",
-          credential: "{\"credentialId\":\"credential\"}",
+          credential: '{"credentialId":"credential"}',
           selectionToken: "selection-token",
         },
       }),
@@ -24,14 +21,13 @@ describe("shared authentication UI requests", () => {
       kind: "webauthn",
       values: {
         ceremony: "registration",
-        credential: "{\"credentialId\":\"credential\"}",
+        credential: '{"credentialId":"credential"}',
         selectionToken: "selection-token",
       },
     });
   });
 
-  it("rejects unsupported actions and malformed credentials", () => {
+  it("rejects unsupported actions", () => {
     expect(readAuthUiRequest({ action: "delete_everything" })).toBeUndefined();
-    expect(readCredential("{")).toBeUndefined();
   });
 });

@@ -1,1364 +1,934 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import type { AuthWorkerEnv } from "@sprintjam/types";
-import * as utils from "@sprintjam/utils";
+import { AuthError } from "@ngriffin_uk/auth-core";
 import * as services from "@sprintjam/services";
-import { generateTotp } from "@ngriffin_uk/auth-otp";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
-  requestMagicLinkController,
-  verifyCodeController,
-  startMfaSetupController,
-  verifyMfaSetupController,
-  verifyMfaController,
   getCurrentUserController,
   logoutController,
+  requestMagicLinkController,
+  startMfaSetupController,
+  startMfaVerifyController,
+  verifyCodeController,
+  verifyMfaController,
+  verifyMfaSetupController,
 } from "./auth-controller";
-import { WorkspaceAuthRepository } from "../repositories/workspace-auth";
+import { createTestAuthWorkerEnv } from "../test/auth-worker-env";
 
-const makeRequest = (input: RequestInfo | URL, init?: RequestInit): Request =>
-  new Request(input, init);
+const authMocks = vi.hoisted(() => ({
+  touchSession: vi.fn(),
+  consumeChallenge: vi.fn(),
+  createChallenge: vi.fn(),
+  finishAuthentication: vi.fn(),
+  finishRegistration: vi.fn(),
+  issueChallenge: vi.fn(),
+  magicLinkRequest: vi.fn(),
+  magicLinkVerify: vi.fn(),
+  readChallenge: vi.fn(),
+  revokeSession: vi.fn(),
+  startAuthentication: vi.fn(),
+  startOtpSetup: vi.fn(),
+  startRegistration: vi.fn(),
+  verifyOtpChallenge: vi.fn(),
+  verifyOtpRecoveryCode: vi.fn(),
+  verifyOtpSetup: vi.fn(),
+}));
+
+const dependencyMocks = vi.hoisted(() => ({
+  createSprintJamAuth: vi.fn(),
+  createSprintJamMagicLinkAuth: vi.fn(),
+  createSprintJamOtpAuth: vi.fn(),
+  createSprintJamWebAuthnAuth: vi.fn(),
+  workspaceAuthRepository: vi.fn(),
+}));
 
 vi.mock("../repositories/workspace-auth", () => ({
-  WorkspaceAuthRepository: vi.fn(),
+  WorkspaceAuthRepository: dependencyMocks.workspaceAuthRepository,
 }));
-vi.mock("@sprintjam/services");
-vi.mock("@sprintjam/utils", async () => {
-  const actual = await vi.importActual("@sprintjam/utils");
+
+vi.mock("../lib/shared-auth", async () => {
+  const actual = await vi.importActual("../lib/shared-auth");
   return {
     ...actual,
-    generateToken: vi.fn(),
-    generateVerificationCode: vi.fn(),
-    hashToken: vi.fn(),
+    createSprintJamAuth: dependencyMocks.createSprintJamAuth,
+    createSprintJamMagicLinkAuth: dependencyMocks.createSprintJamMagicLinkAuth,
+    createSprintJamOtpAuth: dependencyMocks.createSprintJamOtpAuth,
+    createSprintJamWebAuthnAuth: dependencyMocks.createSprintJamWebAuthnAuth,
   };
 });
 
+vi.mock("@sprintjam/services");
+
+const env = createTestAuthWorkerEnv();
+
+const authUser = {
+  id: "12",
+  email: "user@example.com",
+  name: "Test User",
+  organisationId: 2,
+  workspaceRole: "member" as const,
+  createdAt: new Date("2026-01-01T00:00:00.000Z"),
+};
+
+const authenticatedResult = {
+  status: "authenticated",
+  session: {
+    token: "session-token",
+    expiresAt: new Date("2026-01-02T00:00:00.000Z"),
+    user: authUser,
+  },
+};
+
+const setupSelection = {
+  payload: {
+    userId: authUser.id,
+    email: authUser.email,
+    mode: "setup",
+    availableChallenges: ["totp", "webauthn"],
+  },
+};
+
+const verifySelection = {
+  payload: {
+    userId: authUser.id,
+    email: authUser.email,
+    mode: "verify",
+    availableChallenges: ["totp"],
+  },
+};
+
+beforeEach(() => {
+  vi.clearAllMocks();
+  dependencyMocks.createSprintJamAuth.mockReturnValue({
+    touchSession: authMocks.touchSession,
+    consumeChallenge: authMocks.consumeChallenge,
+    issueChallenge: authMocks.issueChallenge,
+    readChallenge: authMocks.readChallenge,
+    revokeSession: authMocks.revokeSession,
+  });
+  dependencyMocks.createSprintJamMagicLinkAuth.mockReturnValue({
+    issueChallenge: authMocks.issueChallenge,
+    providers: {
+      "magic-link": {
+        request: authMocks.magicLinkRequest,
+        verify: authMocks.magicLinkVerify,
+      },
+    },
+  });
+  dependencyMocks.createSprintJamOtpAuth.mockReturnValue({
+    providers: {
+      otp: {
+        createChallenge: authMocks.createChallenge,
+        startSetup: authMocks.startOtpSetup,
+        verifyChallenge: authMocks.verifyOtpChallenge,
+        verifyRecoveryCode: authMocks.verifyOtpRecoveryCode,
+        verifySetup: authMocks.verifyOtpSetup,
+      },
+    },
+  });
+  dependencyMocks.createSprintJamWebAuthnAuth.mockReturnValue({
+    providers: {
+      webauthn: {
+        finishAuthentication: authMocks.finishAuthentication,
+        finishRegistration: authMocks.finishRegistration,
+        startAuthentication: authMocks.startAuthentication,
+        startRegistration: authMocks.startRegistration,
+      },
+    },
+  });
+  vi.mocked(services.sendVerificationCodeEmail).mockResolvedValue(undefined);
+});
+
 describe("requestMagicLinkController", () => {
-  let mockEnv: AuthWorkerEnv;
-  let mockRepo: any;
+  const repository = {
+    getActiveOrganisationMembershipByEmail: vi.fn(),
+    getPendingWorkspaceInviteByEmail: vi.fn(),
+    isDomainAllowed: vi.fn(),
+    logAuditEvent: vi.fn(),
+  };
 
   beforeEach(() => {
-    vi.clearAllMocks();
-    mockEnv = {
-      DB: {} as any,
-      SEND_EMAIL: {
-        send: vi.fn(),
-      } as any,
-    } as AuthWorkerEnv;
-
-    mockRepo = {
-      isDomainAllowed: vi.fn(),
-      getPendingWorkspaceInviteByEmail: vi.fn().mockResolvedValue(null),
-      getActiveOrganisationMembershipByEmail: vi.fn().mockResolvedValue(null),
-      getUserByEmail: vi.fn().mockResolvedValue(null),
-      createMagicLink: vi.fn(),
-      logAuditEvent: vi.fn(),
-    };
-
-    vi.mocked(WorkspaceAuthRepository).mockImplementation(function () {
-      return mockRepo;
+    repository.getActiveOrganisationMembershipByEmail.mockResolvedValue(null);
+    repository.getPendingWorkspaceInviteByEmail.mockResolvedValue(null);
+    repository.isDomainAllowed.mockResolvedValue(true);
+    repository.logAuditEvent.mockResolvedValue(undefined);
+    dependencyMocks.workspaceAuthRepository.mockImplementation(function () {
+      return repository;
     });
-    vi.mocked(utils.generateVerificationCode).mockReturnValue("123456");
-    vi.mocked(utils.hashToken).mockResolvedValue("hashed-code-123");
-    vi.mocked(services.sendVerificationCodeEmail).mockResolvedValue(undefined);
+    authMocks.magicLinkRequest.mockResolvedValue({
+      status: "verification_required",
+      challenge: {
+        kind: "magic_link",
+        continuationToken: "challenge-token",
+        expiresAt: new Date("2026-01-01T00:10:00.000Z"),
+        parameters: { mode: "code" },
+      },
+    });
   });
 
-  it("should return error when email is missing", async () => {
-    const request = makeRequest("https://test.com/auth/request", {
-      method: "POST",
-      body: JSON.stringify({}),
-    });
-
-    const response = await requestMagicLinkController(request, mockEnv);
-    const data = (await response.json()) as { error: string };
-
-    expect(response.status).toBe(400);
-    expect(data.error).toBe("Email is required");
-  });
-
-  it("should return error when email format is invalid", async () => {
-    const request = makeRequest("https://test.com/auth/request", {
-      method: "POST",
-      body: JSON.stringify({ email: "invalid-email" }),
-    });
-
-    const response = await requestMagicLinkController(request, mockEnv);
-    const data = (await response.json()) as { error: string };
-
-    expect(response.status).toBe(400);
-    expect(data.error).toBe("Invalid email format");
-  });
-
-  it("should trim and lowercase email", async () => {
-    mockRepo.isDomainAllowed.mockResolvedValue(true);
-
-    const request = makeRequest("https://test.com/auth/request", {
-      method: "POST",
-      body: JSON.stringify({ email: "  TEST@EXAMPLE.COM  " }),
-    });
-
-    await requestMagicLinkController(request, mockEnv);
-
-    expect(mockRepo.createMagicLink).toHaveBeenCalledWith(
-      "test@example.com",
-      "hashed-code-123",
-      expect.any(Number),
-    );
-  });
-
-  it("should return 503 when domain check fails", async () => {
-    mockRepo.isDomainAllowed.mockRejectedValue(new Error("DB Error"));
-
-    const request = makeRequest("https://test.com/auth/request", {
-      method: "POST",
-      body: JSON.stringify({ email: "test@example.com" }),
-    });
-
-    const response = await requestMagicLinkController(request, mockEnv);
-    const data = (await response.json()) as { error: string };
-
-    expect(response.status).toBe(503);
-    expect(data.error).toContain("Service temporarily unavailable");
-    expect(mockRepo.logAuditEvent).toHaveBeenCalledWith(
-      expect.objectContaining({
-        event: "magic_link_request",
-        status: "failure",
-        reason: "domain_check_failed",
+  it.each([
+    [{}, "Email is required", "email_required"],
+    [{ email: "not-an-email" }, "Invalid email format", "invalid_email_format"],
+  ])("rejects invalid input", async (body, message, code) => {
+    const response = await requestMagicLinkController(
+      new Request("https://test.com/auth/request", {
+        method: "POST",
+        body: JSON.stringify(body),
       }),
+      env,
     );
+
+    expect(response.status).toBe(400);
+    expect(await response.json()).toEqual({ code, message, error: message });
+    expect(authMocks.magicLinkRequest).not.toHaveBeenCalled();
   });
 
-  it("should return 403 when domain is not allowed", async () => {
-    mockRepo.isDomainAllowed.mockResolvedValue(false);
-    mockRepo.getPendingWorkspaceInviteByEmail.mockResolvedValue(null);
-    mockRepo.getActiveOrganisationMembershipByEmail.mockResolvedValue(null);
+  it("rejects an email without workspace eligibility", async () => {
+    repository.isDomainAllowed.mockResolvedValue(false);
 
-    const request = makeRequest("https://test.com/auth/request", {
-      method: "POST",
-      body: JSON.stringify({ email: "test@notallowed.com" }),
-    });
-
-    const response = await requestMagicLinkController(request, mockEnv);
-    const data = (await response.json()) as {
-      code: string;
-      error: string;
-      message: string;
-    };
+    const response = await requestMagicLinkController(
+      new Request("https://test.com/auth/request", {
+        method: "POST",
+        body: JSON.stringify({ email: "user@blocked.example" }),
+      }),
+      env,
+    );
 
     expect(response.status).toBe(403);
-    expect(data.code).toBe("domain_not_allowed");
-    expect(data.error).toContain("not authorized for workspace access");
-    expect(data.message).toContain("not authorized for workspace access");
-    expect(mockRepo.logAuditEvent).toHaveBeenCalledWith(
+    expect(await response.json()).toEqual(
+      expect.objectContaining({ code: "domain_not_allowed" }),
+    );
+    expect(repository.logAuditEvent).toHaveBeenCalledWith(
       expect.objectContaining({
+        email: "user@blocked.example",
         event: "magic_link_request",
-        status: "failure",
         reason: "domain_not_allowed",
-      }),
-    );
-  });
-
-  it("should return 500 when verification code creation fails", async () => {
-    mockRepo.isDomainAllowed.mockResolvedValue(true);
-    mockRepo.createMagicLink.mockRejectedValue(new Error("DB Error"));
-
-    const request = makeRequest("https://test.com/auth/request", {
-      method: "POST",
-      body: JSON.stringify({ email: "test@example.com" }),
-    });
-
-    const response = await requestMagicLinkController(request, mockEnv);
-    const data = (await response.json()) as { error: string };
-
-    expect(response.status).toBe(500);
-    expect(data.error).toContain("Unable to create a verification code");
-    expect(mockRepo.logAuditEvent).toHaveBeenCalledWith(
-      expect.objectContaining({
-        event: "magic_link_request",
         status: "failure",
-        reason: "magic_link_persist_failed",
       }),
     );
+    expect(authMocks.magicLinkRequest).not.toHaveBeenCalled();
   });
 
-  it("should return 500 when email sending fails", async () => {
-    mockRepo.isDomainAllowed.mockResolvedValue(true);
-    mockRepo.createMagicLink.mockResolvedValue(undefined);
-    vi.mocked(services.sendVerificationCodeEmail).mockRejectedValue(
-      new Error("Email Error"),
+  it("returns a service error when eligibility storage is unavailable", async () => {
+    repository.isDomainAllowed.mockRejectedValue(new Error("D1 unavailable"));
+    vi.spyOn(console, "error").mockImplementation(() => undefined);
+
+    const response = await requestMagicLinkController(
+      new Request("https://test.com/auth/request", {
+        method: "POST",
+        body: JSON.stringify({ email: "user@example.com" }),
+      }),
+      env,
     );
 
-    const request = makeRequest("https://test.com/auth/request", {
-      method: "POST",
-      body: JSON.stringify({ email: "test@example.com" }),
+    expect(response.status).toBe(503);
+    expect(await response.json()).toEqual({
+      code: "workspace_eligibility_unavailable",
+      message: "Service temporarily unavailable",
+      error: "Service temporarily unavailable",
     });
-
-    const response = await requestMagicLinkController(request, mockEnv);
-    const data = (await response.json()) as { error: string };
-
-    expect(response.status).toBe(500);
-    expect(data.error).toBe("Failed to send verification code email");
-    expect(mockRepo.logAuditEvent).toHaveBeenCalledWith(
+    expect(authMocks.magicLinkRequest).not.toHaveBeenCalled();
+    expect(repository.logAuditEvent).toHaveBeenCalledWith(
       expect.objectContaining({
+        email: "user@example.com",
         event: "magic_link_request",
+        reason: "domain_check_failed",
         status: "failure",
-        reason: "magic_link_email_failed",
       }),
     );
   });
 
-  it("should successfully send verification code for valid email", async () => {
-    mockRepo.isDomainAllowed.mockResolvedValue(true);
-    mockRepo.createMagicLink.mockResolvedValue(undefined);
+  it.each([
+    ["invite", { id: 1, organisationId: 2 }, null, "code_sent_for_invite"],
+    [
+      "membership",
+      null,
+      { organisationId: 2, status: "active" },
+      "code_sent_for_existing_member",
+    ],
+  ])(
+    "allows an existing %s when the domain is blocked",
+    async (_case, invite, membership, reason) => {
+      repository.isDomainAllowed.mockResolvedValue(false);
+      repository.getPendingWorkspaceInviteByEmail.mockResolvedValue(invite);
+      repository.getActiveOrganisationMembershipByEmail.mockResolvedValue(
+        membership,
+      );
 
-    const request = makeRequest("https://test.com/auth/request", {
-      method: "POST",
-      body: JSON.stringify({ email: "test@example.com" }),
-    });
+      const response = await requestMagicLinkController(
+        new Request("https://test.com/auth/request", {
+          method: "POST",
+          body: JSON.stringify({ email: "USER@EXTERNAL.EXAMPLE" }),
+        }),
+        env,
+      );
 
-    const response = await requestMagicLinkController(request, mockEnv);
-    const data = (await response.json()) as { message: string };
+      expect(response.status).toBe(200);
+      expect(authMocks.magicLinkRequest).toHaveBeenCalledWith(
+        "user@external.example",
+      );
+      expect(repository.logAuditEvent).toHaveBeenCalledWith(
+        expect.objectContaining({ reason, status: "success" }),
+      );
+    },
+  );
+
+  it("maps magic-link delivery to the email service", async () => {
+    dependencyMocks.createSprintJamMagicLinkAuth.mockImplementation(
+      (_authEnv, options) => ({
+        providers: {
+          "magic-link": {
+            request: async (email: string) => {
+              await options.send({
+                email,
+                token: "123456",
+                expiresAt: new Date("2026-01-01T00:10:00.000Z"),
+              });
+              return {
+                status: "verification_required",
+                challenge: {
+                  kind: "magic_link",
+                  continuationToken: "challenge-token",
+                  expiresAt: new Date("2026-01-01T00:10:00.000Z"),
+                  parameters: { mode: "code" },
+                },
+              };
+            },
+          },
+        },
+      }),
+    );
+
+    const response = await requestMagicLinkController(
+      new Request("https://test.com/auth/request", {
+        method: "POST",
+        body: JSON.stringify({ email: " user@example.com " }),
+      }),
+      env,
+    );
 
     expect(response.status).toBe(200);
-    expect(data.message).toBe("Verification code sent to your email");
     expect(services.sendVerificationCodeEmail).toHaveBeenCalledWith({
-      email: "test@example.com",
+      email: "user@example.com",
       code: "123456",
-      sendEmail: mockEnv.SEND_EMAIL,
+      sendEmail: env.SEND_EMAIL,
     });
-    expect(mockRepo.logAuditEvent).toHaveBeenCalledWith(
+  });
+
+  it("returns a stable error when delivery fails", async () => {
+    authMocks.magicLinkRequest.mockRejectedValue(new Error("provider detail"));
+    vi.spyOn(console, "error").mockImplementation(() => undefined);
+
+    const response = await requestMagicLinkController(
+      new Request("https://test.com/auth/request", {
+        method: "POST",
+        body: JSON.stringify({ email: "user@example.com" }),
+      }),
+      env,
+    );
+
+    expect(response.status).toBe(500);
+    expect(await response.json()).toEqual({
+      code: "verification_code_email_failed",
+      message: "Failed to send verification code email",
+      error: "Failed to send verification code email",
+    });
+    expect(repository.logAuditEvent).toHaveBeenCalledWith(
       expect.objectContaining({
-        event: "magic_link_request",
-        status: "success",
-        reason: "code_sent",
+        reason: "magic_link_email_failed",
+        status: "failure",
       }),
     );
-  });
-
-  it("should generate correct verification code and hash it", async () => {
-    mockRepo.isDomainAllowed.mockResolvedValue(true);
-    mockRepo.createMagicLink.mockResolvedValue(undefined);
-
-    const request = makeRequest("https://test.com/auth/request", {
-      method: "POST",
-      body: JSON.stringify({ email: "test@example.com" }),
-    });
-
-    await requestMagicLinkController(request, mockEnv);
-
-    expect(utils.generateVerificationCode).toHaveBeenCalled();
-    expect(utils.hashToken).toHaveBeenCalledWith("123456");
-    expect(mockRepo.createMagicLink).toHaveBeenCalledWith(
-      "test@example.com",
-      "hashed-code-123",
-      expect.any(Number),
-    );
-  });
-
-  it("should allow invited email even when domain is not allowed", async () => {
-    mockRepo.isDomainAllowed.mockResolvedValue(false);
-    mockRepo.getPendingWorkspaceInviteByEmail.mockResolvedValue({
-      id: 7,
-      organisationId: 3,
-      email: "invitee@otherdomain.com",
-    });
-    mockRepo.createMagicLink.mockResolvedValue(undefined);
-
-    const request = makeRequest("https://test.com/auth/request", {
-      method: "POST",
-      body: JSON.stringify({ email: "invitee@otherdomain.com" }),
-    });
-
-    const response = await requestMagicLinkController(request, mockEnv);
-    expect(response.status).toBe(200);
-    expect(mockRepo.getPendingWorkspaceInviteByEmail).toHaveBeenCalledWith(
-      "invitee@otherdomain.com",
-    );
-  });
-
-  it("should allow existing user when domain is not allowed", async () => {
-    mockRepo.isDomainAllowed.mockResolvedValue(false);
-    mockRepo.getPendingWorkspaceInviteByEmail.mockResolvedValue(null);
-    mockRepo.getActiveOrganisationMembershipByEmail.mockResolvedValue({
-      organisationId: 2,
-      role: "member",
-      status: "active",
-    });
-    mockRepo.createMagicLink.mockResolvedValue(undefined);
-
-    const request = makeRequest("https://test.com/auth/request", {
-      method: "POST",
-      body: JSON.stringify({ email: "existing@external.com" }),
-    });
-
-    const response = await requestMagicLinkController(request, mockEnv);
-    expect(response.status).toBe(200);
   });
 });
 
 describe("verifyCodeController", () => {
-  let mockEnv: AuthWorkerEnv;
-  let mockRepo: any;
+  const repository = {
+    listMfaCredentials: vi.fn(),
+    logAuditEvent: vi.fn(),
+  };
 
   beforeEach(() => {
-    vi.clearAllMocks();
-    mockEnv = {
-      DB: {} as any,
-      TOKEN_ENCRYPTION_SECRET: "test-secret",
-      SEND_EMAIL: {
-        send: vi.fn(),
-      } as any,
-    } as AuthWorkerEnv;
-
-    mockRepo = {
-      validateVerificationCode: vi.fn(),
-      getPendingWorkspaceInviteByEmail: vi.fn().mockResolvedValue(null),
-      getActiveOrganisationMembershipByEmail: vi.fn().mockResolvedValue(null),
-      isDomainAllowed: vi.fn().mockResolvedValue(true),
-      getOrCreateOrganisation: vi.fn(),
-      getOrganisationById: vi.fn().mockResolvedValue({
-        id: 1,
-        domain: "example.com",
-        name: "Example",
-        ownerId: 100,
-        requireMemberApproval: false,
-      }),
-      getOrganisationMembership: vi.fn().mockResolvedValue(null),
-      upsertWorkspaceMembership: vi.fn(),
-      updateUserOrganisation: vi.fn(),
-      getOrCreateUser: vi.fn(),
-      setOrganisationOwnerIfNull: vi.fn(),
-      getUserByEmail: vi.fn(),
-      markWorkspaceInviteAccepted: vi.fn(),
-      listMfaCredentials: vi.fn(),
-      createAuthChallenge: vi.fn(),
-      logAuditEvent: vi.fn(),
-    };
-
-    vi.mocked(WorkspaceAuthRepository).mockImplementation(function () {
-      return mockRepo;
+    repository.listMfaCredentials.mockResolvedValue([]);
+    repository.logAuditEvent.mockResolvedValue(undefined);
+    dependencyMocks.workspaceAuthRepository.mockImplementation(function () {
+      return repository;
     });
-    vi.mocked(utils.generateToken).mockResolvedValue("session-token-123");
-    vi.mocked(utils.hashToken).mockResolvedValue("hashed-session-123");
+    authMocks.magicLinkVerify.mockResolvedValue(authUser);
+    authMocks.issueChallenge.mockResolvedValue({
+      token: "selection-token",
+      expiresAt: new Date("2026-01-01T00:10:00.000Z"),
+    });
   });
 
-  it("should return error when email or code is missing", async () => {
-    const request = makeRequest("https://test.com/auth/verify", {
-      method: "POST",
-      body: JSON.stringify({}),
-    });
-
-    const response = await verifyCodeController(request, mockEnv);
-    const data = (await response.json()) as { error: string };
+  it("requires a challenge token and code", async () => {
+    const response = await verifyCodeController(
+      new Request("https://test.com/auth/verify", {
+        method: "POST",
+        body: JSON.stringify({ code: "123456" }),
+      }),
+      env,
+    );
 
     expect(response.status).toBe(400);
-    expect(data.error).toBe("Email and code are required");
+    expect(await response.json()).toEqual({
+      code: "challenge_and_code_required",
+      message: "Challenge token and code are required",
+      error: "Challenge token and code are required",
+    });
   });
 
-  it("should return 401 when verification code is invalid", async () => {
-    mockRepo.validateVerificationCode.mockResolvedValue({
-      success: false,
-      error: "invalid",
-    });
+  it.each([
+    ["invalid_credentials", "Invalid verification code"],
+    ["challenge_expired", "Verification code has expired"],
+  ] as const)("maps %s to a safe response", async (errorCode, message) => {
+    authMocks.magicLinkVerify.mockRejectedValue(new AuthError(errorCode));
 
-    const request = makeRequest("https://test.com/auth/verify", {
-      method: "POST",
-      body: JSON.stringify({ email: "test@example.com", code: "000000" }),
-    });
-
-    const response = await verifyCodeController(request, mockEnv);
-    const data = (await response.json()) as { error: string };
+    const response = await verifyCodeController(
+      new Request("https://test.com/auth/verify", {
+        method: "POST",
+        body: JSON.stringify({
+          challengeToken: "challenge-token",
+          code: "123456",
+        }),
+      }),
+      env,
+    );
 
     expect(response.status).toBe(401);
-    expect(data.error).toBe("Invalid verification code");
-    expect(mockRepo.logAuditEvent).toHaveBeenCalledWith(
-      expect.objectContaining({
-        email: "test@example.com",
-        event: "magic_link_verify",
-        status: "failure",
-        reason: "invalid",
-      }),
+    expect(await response.json()).toEqual(
+      expect.objectContaining({ message, error: message }),
     );
   });
 
-  it("should return 401 when verification code is expired", async () => {
-    mockRepo.validateVerificationCode.mockResolvedValue({
-      success: false,
-      error: "expired",
-    });
-
-    const request = makeRequest("https://test.com/auth/verify", {
-      method: "POST",
-      body: JSON.stringify({ email: "test@example.com", code: "123456" }),
-    });
-
-    const response = await verifyCodeController(request, mockEnv);
-    const data = (await response.json()) as { error: string };
-
-    expect(response.status).toBe(401);
-    expect(data.error).toBe("Verification code has expired");
-  });
-
-  it("should return MFA setup when no MFA credentials exist", async () => {
-    mockRepo.validateVerificationCode.mockResolvedValue({
-      success: true,
-      email: "test@example.com",
-    });
-    mockRepo.getUserByEmail.mockResolvedValueOnce(null).mockResolvedValueOnce({
-      id: 100,
-      email: "test@example.com",
-      name: "Test User",
-      organisationId: 1,
-    });
-    mockRepo.getOrCreateOrganisation.mockResolvedValue(1);
-    mockRepo.getOrCreateUser.mockResolvedValue(100);
-    mockRepo.listMfaCredentials.mockResolvedValue([]);
-    mockRepo.getOrganisationById.mockResolvedValue({
-      id: 1,
-      domain: "example.com",
-      name: "Example",
-      ownerId: 100,
-      requireMemberApproval: false,
-    });
-
-    const request = makeRequest("https://test.com/auth/verify", {
-      method: "POST",
-      body: JSON.stringify({ email: "test@example.com", code: "123456" }),
-    });
-
-    const response = await verifyCodeController(request, mockEnv);
-    const data = (await response.json()) as {
-      status: string;
-      mode: string;
-      challengeToken: string;
-      methods: string[];
-    };
+  it("issues an MFA setup selection when no credentials exist", async () => {
+    const response = await verifyCodeController(
+      new Request("https://test.com/auth/verify", {
+        method: "POST",
+        body: JSON.stringify({
+          challengeToken: "challenge-token",
+          code: "123456",
+        }),
+      }),
+      env,
+    );
 
     expect(response.status).toBe(200);
-    expect(data.status).toBe("mfa_required");
-    expect(data.mode).toBe("setup");
-    expect(data.methods).toContain("totp");
-    expect(data.methods).toContain("webauthn");
-  });
-
-  it("should create organisation and user for new email", async () => {
-    mockRepo.validateVerificationCode.mockResolvedValue({
-      success: true,
-      email: "newuser@newcompany.com",
+    expect(authMocks.magicLinkVerify).toHaveBeenCalledWith({
+      token: "challenge-token",
+      code: "123456",
     });
-    mockRepo.getUserByEmail.mockResolvedValueOnce(null).mockResolvedValueOnce({
-      id: 200,
-      email: "newuser@newcompany.com",
-      name: null,
-      organisationId: 2,
-    });
-    mockRepo.getOrCreateOrganisation.mockResolvedValue(2);
-    mockRepo.getOrCreateUser.mockResolvedValue(200);
-    mockRepo.listMfaCredentials.mockResolvedValue([]);
-    mockRepo.getOrganisationById.mockResolvedValue({
-      id: 2,
-      domain: "newcompany.com",
-      name: "New Company",
-      ownerId: 200,
-      requireMemberApproval: false,
-    });
-
-    const request = makeRequest("https://test.com/auth/verify", {
-      method: "POST",
-      body: JSON.stringify({ email: "newuser@newcompany.com", code: "123456" }),
-    });
-
-    await verifyCodeController(request, mockEnv);
-
-    expect(mockRepo.getOrCreateOrganisation).toHaveBeenCalledWith(
-      "newcompany.com",
+    expect(authMocks.issueChallenge).toHaveBeenCalledWith(
+      "sprintjam",
+      "mfa_selection",
+      {
+        userId: authUser.id,
+        email: authUser.email,
+        mode: "setup",
+        availableChallenges: ["totp", "webauthn"],
+      },
     );
-    expect(mockRepo.getOrCreateUser).toHaveBeenCalledWith(
-      "newuser@newcompany.com",
-      2,
+    expect(await response.json()).toEqual({
+      status: "mfa_setup_required",
+      challenge: {
+        kind: "mfa_selection",
+        continuationToken: "selection-token",
+        expiresAt: "2026-01-01T00:10:00.000Z",
+        parameters: {
+          mode: "setup",
+          availableChallenges: ["totp", "webauthn"],
+        },
+      },
+    });
+  });
+
+  it("deduplicates supported MFA methods for an existing user", async () => {
+    repository.listMfaCredentials.mockResolvedValue([
+      { type: "totp" },
+      { type: "totp" },
+      { type: "unsupported" },
+      { type: "webauthn" },
+    ]);
+
+    const response = await verifyCodeController(
+      new Request("https://test.com/auth/verify", {
+        method: "POST",
+        body: JSON.stringify({
+          challengeToken: "challenge-token",
+          code: "123456",
+        }),
+      }),
+      env,
     );
-    expect(mockRepo.createAuthChallenge).toHaveBeenCalledWith(
-      expect.objectContaining({ userId: 200 }),
+
+    expect(response.status).toBe(200);
+    expect(authMocks.issueChallenge).toHaveBeenCalledWith(
+      "sprintjam",
+      "mfa_selection",
+      expect.objectContaining({
+        mode: "verify",
+        availableChallenges: ["totp", "webauthn"],
+      }),
     );
-  });
-
-  it("should set organisation owner on sign in", async () => {
-    mockRepo.validateVerificationCode.mockResolvedValue({
-      success: true,
-      email: "owner@example.com",
-    });
-    mockRepo.getUserByEmail.mockResolvedValueOnce(null).mockResolvedValueOnce({
-      id: 100,
-      email: "owner@example.com",
-      name: null,
-      organisationId: 1,
-    });
-    mockRepo.getOrCreateOrganisation.mockResolvedValue(1);
-    mockRepo.getOrCreateUser.mockResolvedValue(100);
-    mockRepo.listMfaCredentials.mockResolvedValue([]);
-    mockRepo.getOrganisationById.mockResolvedValue({
-      id: 1,
-      domain: "example.com",
-      name: "Example",
-      ownerId: 100,
-      requireMemberApproval: false,
-    });
-
-    const request = makeRequest("https://test.com/auth/verify", {
-      method: "POST",
-      body: JSON.stringify({ email: "owner@example.com", code: "123456" }),
-    });
-
-    await verifyCodeController(request, mockEnv);
-
-    expect(mockRepo.setOrganisationOwnerIfNull).toHaveBeenCalledWith(1, 100);
-  });
-
-  it("should set organisation owner when signing in via invite", async () => {
-    mockRepo.validateVerificationCode.mockResolvedValue({
-      success: true,
-      email: "invitee@external.com",
-    });
-    mockRepo.getPendingWorkspaceInviteByEmail.mockResolvedValue({
-      id: 19,
-      organisationId: 42,
-      email: "invitee@external.com",
-      invitedById: 7,
-    });
-    mockRepo.getUserByEmail.mockResolvedValueOnce(null).mockResolvedValueOnce({
-      id: 501,
-      email: "invitee@external.com",
-      name: null,
-      organisationId: 42,
-    });
-    mockRepo.getOrCreateUser.mockResolvedValue(501);
-    mockRepo.listMfaCredentials.mockResolvedValue([]);
-    mockRepo.getOrganisationById.mockResolvedValue({
-      id: 42,
-      domain: "external.com",
-      name: "External",
-      ownerId: 501,
-      requireMemberApproval: false,
-    });
-
-    const request = makeRequest("https://test.com/auth/verify", {
-      method: "POST",
-      body: JSON.stringify({ email: "invitee@external.com", code: "123456" }),
-    });
-
-    await verifyCodeController(request, mockEnv);
-
-    expect(mockRepo.setOrganisationOwnerIfNull).toHaveBeenCalledWith(42, 501);
-  });
-
-  it("should use workspace invite organisation when invite exists", async () => {
-    mockRepo.validateVerificationCode.mockResolvedValue({
-      success: true,
-      email: "invitee@external.com",
-    });
-    mockRepo.getPendingWorkspaceInviteByEmail.mockResolvedValue({
-      id: 19,
-      organisationId: 42,
-      email: "invitee@external.com",
-      invitedById: 7,
-    });
-    mockRepo.getUserByEmail.mockResolvedValueOnce(null).mockResolvedValueOnce({
-      id: 501,
-      email: "invitee@external.com",
-      name: null,
-      organisationId: 42,
-    });
-    mockRepo.getOrCreateUser.mockResolvedValue(501);
-    mockRepo.listMfaCredentials.mockResolvedValue([]);
-    mockRepo.getOrganisationById.mockResolvedValue({
-      id: 42,
-      domain: "external.com",
-      name: "External",
-      ownerId: 501,
-      requireMemberApproval: false,
-    });
-
-    const request = makeRequest("https://test.com/auth/verify", {
-      method: "POST",
-      body: JSON.stringify({ email: "invitee@external.com", code: "123456" }),
-    });
-
-    await verifyCodeController(request, mockEnv);
-
-    expect(mockRepo.getOrCreateOrganisation).not.toHaveBeenCalled();
-    expect(mockRepo.getOrCreateUser).toHaveBeenCalledWith(
-      "invitee@external.com",
-      42,
+    expect(await response.json()).toEqual(
+      expect.objectContaining({ status: "mfa_challenge_required" }),
     );
-    expect(mockRepo.markWorkspaceInviteAccepted).toHaveBeenCalledWith(19, 501);
-  });
-
-  it("should hash code before validation", async () => {
-    mockRepo.validateVerificationCode.mockResolvedValue({
-      success: true,
-      email: "test@example.com",
-    });
-    mockRepo.getUserByEmail.mockResolvedValueOnce(null).mockResolvedValueOnce({
-      id: 100,
-      email: "test@example.com",
-      name: "Test User",
-      organisationId: 1,
-    });
-    mockRepo.getOrCreateOrganisation.mockResolvedValue(1);
-    mockRepo.getOrCreateUser.mockResolvedValue(100);
-    mockRepo.listMfaCredentials.mockResolvedValue([]);
-    mockRepo.getOrganisationById.mockResolvedValue({
-      id: 1,
-      domain: "example.com",
-      name: "Example",
-      ownerId: 100,
-      requireMemberApproval: false,
-    });
-
-    const request = makeRequest("https://test.com/auth/verify", {
-      method: "POST",
-      body: JSON.stringify({ email: "test@example.com", code: "654321" }),
-    });
-
-    await verifyCodeController(request, mockEnv);
-
-    expect(utils.hashToken).toHaveBeenCalledWith("654321");
-  });
-
-  it("should create a pending membership when workspace approval is required", async () => {
-    mockRepo.validateVerificationCode.mockResolvedValue({
-      success: true,
-      email: "pending@example.com",
-    });
-    mockRepo.getUserByEmail.mockResolvedValueOnce(null).mockResolvedValueOnce({
-      id: 300,
-      email: "pending@example.com",
-      name: null,
-      organisationId: 9,
-    });
-    mockRepo.getOrCreateOrganisation.mockResolvedValue(9);
-    mockRepo.getOrCreateUser.mockResolvedValue(300);
-    mockRepo.getOrganisationById.mockResolvedValue({
-      id: 9,
-      domain: "example.com",
-      name: "Example",
-      ownerId: 1,
-      requireMemberApproval: true,
-    });
-
-    const request = makeRequest("https://test.com/auth/verify", {
-      method: "POST",
-      body: JSON.stringify({ email: "pending@example.com", code: "123456" }),
-    });
-
-    const response = await verifyCodeController(request, mockEnv);
-    const data = (await response.json()) as { error: string };
-
-    expect(response.status).toBe(403);
-    expect(data.error).toBe("Your workspace membership is pending approval");
-    expect(mockRepo.upsertWorkspaceMembership).toHaveBeenCalledWith({
-      organisationId: 9,
-      userId: 300,
-      role: "member",
-      status: "pending",
-    });
-    expect(mockRepo.createAuthChallenge).not.toHaveBeenCalled();
   });
 });
 
-describe("getCurrentUserController", () => {
-  let mockEnv: AuthWorkerEnv;
-  let mockRepo: any;
+describe("session controllers", () => {
+  const repository = {
+    getOrganisationMembership: vi.fn(),
+    getOrganisationTeams: vi.fn(),
+    getTeamMembership: vi.fn(),
+    getUserByEmail: vi.fn(),
+    isOrganisationAdmin: vi.fn(),
+  };
 
   beforeEach(() => {
-    vi.clearAllMocks();
-    mockEnv = {
-      DB: {} as any,
-    } as AuthWorkerEnv;
+    dependencyMocks.workspaceAuthRepository.mockImplementation(function () {
+      return repository;
+    });
+    authMocks.touchSession.mockResolvedValue({ user: authUser });
+    authMocks.revokeSession.mockResolvedValue(undefined);
+    repository.getUserByEmail.mockResolvedValue({
+      id: 12,
+      email: authUser.email,
+      name: authUser.name,
+      avatar: null,
+      organisationId: authUser.organisationId,
+    });
+    repository.getOrganisationMembership.mockResolvedValue({
+      role: "member",
+      status: "active",
+    });
+    repository.isOrganisationAdmin.mockResolvedValue(false);
+    repository.getOrganisationTeams.mockResolvedValue([]);
+    repository.getTeamMembership.mockResolvedValue(null);
+  });
 
-    mockRepo = {
-      validateSession: vi.fn(),
-      getUserByEmail: vi.fn(),
-      getOrganisationMembership: vi.fn().mockResolvedValue({
-        id: 1,
-        organisationId: 1,
-        userId: 100,
-        role: "member",
-        status: "active",
+  it.each([
+    ["missing", {}],
+    ["invalid", { Authorization: "Basic token" }],
+  ])("rejects a %s session credential", async (_case, headers) => {
+    const response = await getCurrentUserController(
+      new Request("https://test.com/auth/me", { headers }),
+      env,
+    );
+
+    expect(response.status).toBe(401);
+    expect(authMocks.touchSession).not.toHaveBeenCalled();
+  });
+
+  it("rejects a session that shared auth cannot authenticate", async () => {
+    authMocks.touchSession.mockResolvedValue(null);
+
+    const response = await getCurrentUserController(
+      new Request("https://test.com/auth/me", {
+        headers: { Authorization: "Bearer invalid-token" },
       }),
-      isOrganisationAdmin: vi.fn().mockResolvedValue(false),
-      getOrganisationById: vi.fn(),
-      getOrganisationMembers: vi.fn(),
-      listPendingWorkspaceInvites: vi.fn(),
-      getOrganisationTeams: vi.fn(),
-      getTeamMembership: vi.fn().mockResolvedValue(null),
-    };
-
-    vi.mocked(WorkspaceAuthRepository).mockImplementation(function () {
-      return mockRepo;
-    });
-    vi.mocked(utils.hashToken).mockResolvedValue("hashed-session");
-  });
-
-  it("should return 401 when Authorization header is missing", async () => {
-    const request = makeRequest("https://test.com/auth/me", {
-      method: "GET",
-    });
-
-    const response = await getCurrentUserController(request, mockEnv);
-    const data = (await response.json()) as { error: string };
+      env,
+    );
 
     expect(response.status).toBe(401);
-    expect(data.error).toBe("Unauthorized");
+    expect(authMocks.touchSession).toHaveBeenCalledWith("invalid-token");
   });
 
-  it("should return 401 when Authorization header does not start with Bearer", async () => {
-    const request = makeRequest("https://test.com/auth/me", {
-      method: "GET",
-      headers: { Authorization: "Basic token" },
-    });
-
-    const response = await getCurrentUserController(request, mockEnv);
-    const data = (await response.json()) as { error: string };
-
-    expect(response.status).toBe(401);
-    expect(data.error).toBe("Unauthorized");
-  });
-
-  it("should return 401 when session is invalid", async () => {
-    mockRepo.validateSession.mockResolvedValue(null);
-
-    const request = makeRequest("https://test.com/auth/me", {
-      method: "GET",
-      headers: { Authorization: "Bearer invalid-token" },
-    });
-
-    const response = await getCurrentUserController(request, mockEnv);
-    const data = (await response.json()) as { error: string };
-
-    expect(response.status).toBe(401);
-    expect(data.error).toBe("Invalid or expired session");
-  });
-
-  it("should return 404 when user is not found", async () => {
-    mockRepo.validateSession.mockResolvedValue({
-      userId: 100,
-      email: "test@example.com",
-    });
-    mockRepo.getUserByEmail.mockResolvedValue(null);
-
-    const request = makeRequest("https://test.com/auth/me", {
-      method: "GET",
-      headers: { Authorization: "Bearer valid-token" },
-    });
-
-    const response = await getCurrentUserController(request, mockEnv);
-    const data = (await response.json()) as { error: string };
-
-    expect(response.status).toBe(404);
-    expect(data.error).toBe("User not found");
-  });
-
-  it("should return user data and teams for valid session", async () => {
-    mockRepo.validateSession.mockResolvedValue({
-      userId: 100,
-      email: "test@example.com",
-    });
-    mockRepo.getUserByEmail.mockResolvedValue({
-      id: 100,
-      email: "test@example.com",
-      name: "Test User",
-      organisationId: 1,
-    });
-    mockRepo.getOrganisationTeams.mockResolvedValue([
+  it("returns the active workspace profile and access-filtered teams", async () => {
+    repository.getOrganisationTeams.mockResolvedValue([
       {
         id: 1,
-        name: "Team Alpha",
-        organisationId: 1,
-        ownerId: 100,
+        name: "Open team",
+        organisationId: 2,
+        ownerId: 99,
         accessPolicy: "open",
       },
       {
         id: 2,
-        name: "Team Beta",
-        organisationId: 1,
-        ownerId: 200,
+        name: "Restricted team",
+        organisationId: 2,
+        ownerId: 99,
         accessPolicy: "restricted",
       },
     ]);
-    mockRepo.getTeamMembership
+    repository.getTeamMembership
       .mockResolvedValueOnce(null)
       .mockResolvedValueOnce({ role: "member", status: "pending" });
 
-    const request = makeRequest("https://test.com/auth/me", {
-      method: "GET",
-      headers: { Authorization: "Bearer valid-token" },
-    });
-
-    const response = await getCurrentUserController(request, mockEnv);
-    const data = (await response.json()) as {
-      user: { id: number; email: string; name: string; organisationId: number };
-      membership: { role: string; status: string };
-      teams: Array<{
-        id: number;
-        name: string;
-        organisationId: number;
-        ownerId: number;
-        currentUserStatus: "pending" | null;
-        canAccess: boolean;
-      }>;
-    };
-
-    expect(response.status).toBe(200);
-    expect(data.user).toEqual({
-      id: 100,
-      email: "test@example.com",
-      name: "Test User",
-      avatar: null,
-      organisationId: 1,
-    });
-    expect(data.membership).toEqual({
-      role: "member",
-      status: "active",
-    });
-    expect(data.teams).toHaveLength(2);
-    expect(data).not.toHaveProperty("organisation");
-    expect(data).not.toHaveProperty("members");
-    expect(data).not.toHaveProperty("invites");
-    expect(data.teams[0]).toEqual(
-      expect.objectContaining({
-        name: "Team Alpha",
-        canAccess: true,
-        currentUserStatus: null,
+    const response = await getCurrentUserController(
+      new Request("https://test.com/auth/me", {
+        headers: { Cookie: "workspace_session=cookie-token" },
       }),
+      env,
     );
-    expect(data.teams[1]).toEqual(
-      expect.objectContaining({
-        name: "Team Beta",
-        canAccess: false,
-        currentUserStatus: "pending",
-      }),
-    );
-  });
-
-  it("should extract token from Bearer header correctly", async () => {
-    mockRepo.validateSession.mockResolvedValue({
-      userId: 100,
-      email: "test@example.com",
-    });
-    mockRepo.getUserByEmail.mockResolvedValue({
-      id: 100,
-      email: "test@example.com",
-      name: "Test User",
-      organisationId: 1,
-    });
-    mockRepo.getOrganisationTeams.mockResolvedValue([]);
-
-    const request = makeRequest("https://test.com/auth/me", {
-      method: "GET",
-      headers: { Authorization: "Bearer my-session-token-123" },
-    });
-
-    await getCurrentUserController(request, mockEnv);
-
-    expect(utils.hashToken).toHaveBeenCalledWith("my-session-token-123");
-  });
-
-  it("should accept session token from cookie", async () => {
-    mockRepo.validateSession.mockResolvedValue({
-      userId: 100,
-      email: "test@example.com",
-    });
-    mockRepo.getUserByEmail.mockResolvedValue({
-      id: 100,
-      email: "test@example.com",
-      name: "Test User",
-      organisationId: 1,
-    });
-    mockRepo.getOrganisationTeams.mockResolvedValue([]);
-
-    const request = makeRequest("https://test.com/auth/me", {
-      method: "GET",
-      headers: { Cookie: "workspace_session=cookie-session-token" },
-    });
-
-    const response = await getCurrentUserController(request, mockEnv);
 
     expect(response.status).toBe(200);
-    expect(utils.hashToken).toHaveBeenCalledWith("cookie-session-token");
-  });
-});
-
-describe("logoutController", () => {
-  let mockEnv: AuthWorkerEnv;
-  let mockRepo: any;
-
-  beforeEach(() => {
-    vi.clearAllMocks();
-    mockEnv = {
-      DB: {} as any,
-    } as AuthWorkerEnv;
-
-    mockRepo = {
-      invalidateSession: vi.fn(),
-    };
-
-    vi.mocked(WorkspaceAuthRepository).mockImplementation(function () {
-      return mockRepo;
-    });
-    vi.mocked(utils.hashToken).mockResolvedValue("hashed-token");
-  });
-
-  it("should return 401 when Authorization header is missing", async () => {
-    const request = makeRequest("https://test.com/auth/logout", {
-      method: "POST",
-    });
-
-    const response = await logoutController(request, mockEnv);
-    const data = (await response.json()) as { error: string };
-
-    expect(response.status).toBe(401);
-    expect(data.error).toBe("Unauthorized");
-  });
-
-  it("should return 401 when Authorization header is invalid", async () => {
-    const request = makeRequest("https://test.com/auth/logout", {
-      method: "POST",
-      headers: { Authorization: "InvalidFormat token" },
-    });
-
-    const response = await logoutController(request, mockEnv);
-    const data = (await response.json()) as { error: string };
-
-    expect(response.status).toBe(401);
-    expect(data.error).toBe("Unauthorized");
-  });
-
-  it("should successfully logout and invalidate session", async () => {
-    mockRepo.invalidateSession.mockResolvedValue(undefined);
-
-    const request = makeRequest("https://test.com/auth/logout", {
-      method: "POST",
-      headers: { Authorization: "Bearer valid-token" },
-    });
-
-    const response = await logoutController(request, mockEnv);
-    const data = (await response.json()) as { message: string };
-
-    expect(response.status).toBe(200);
-    expect(data.message).toBe("Logged out successfully");
-    expect(mockRepo.invalidateSession).toHaveBeenCalledWith("hashed-token");
-
-    const setCookie = response.headers.get("Set-Cookie");
-    expect(setCookie).toContain("workspace_session=");
-    expect(setCookie).toContain("Max-Age=0");
-  });
-
-  it("should hash token before invalidation", async () => {
-    mockRepo.invalidateSession.mockResolvedValue(undefined);
-
-    const request = makeRequest("https://test.com/auth/logout", {
-      method: "POST",
-      headers: { Authorization: "Bearer my-session-token" },
-    });
-
-    await logoutController(request, mockEnv);
-
-    expect(utils.hashToken).toHaveBeenCalledWith("my-session-token");
-    expect(mockRepo.invalidateSession).toHaveBeenCalledWith("hashed-token");
-  });
-});
-
-describe("mfa setup", () => {
-  let mockEnv: AuthWorkerEnv;
-  let mockRepo: any;
-
-  beforeEach(() => {
-    vi.clearAllMocks();
-    mockEnv = {
-      DB: {} as any,
-      TOKEN_ENCRYPTION_SECRET: "test-secret",
-    } as AuthWorkerEnv;
-
-    mockRepo = {
-      getAuthChallengeByTokenHash: vi.fn(),
-      updateAuthChallengeMetadata: vi.fn(),
-      getUserById: vi.fn(),
-      listMfaCredentials: vi.fn(),
-      resetMfaConfiguration: vi.fn(),
-      createTotpCredential: vi.fn(),
-      storeRecoveryCodes: vi.fn(),
-      markAuthChallengeUsed: vi.fn(),
-      logAuditEvent: vi.fn(),
-      createSession: vi.fn(),
-    };
-
-    vi.mocked(WorkspaceAuthRepository).mockImplementation(function () {
-      return mockRepo;
-    });
-    vi.mocked(utils.hashToken).mockResolvedValue("hashed-challenge");
-    vi.mocked(utils.generateToken).mockResolvedValue("session-token-123");
-  });
-
-  it("should start TOTP setup and return secret", async () => {
-    mockRepo.getAuthChallengeByTokenHash.mockResolvedValue({
-      id: 1,
-      userId: 10,
-      type: "setup",
-      usedAt: null,
-      expiresAt: Date.now() + 60000,
-      metadata: null,
-    });
-    mockRepo.getUserById.mockResolvedValue({
-      id: 10,
-      email: "user@example.com",
-    });
-    mockRepo.listMfaCredentials.mockResolvedValue([]);
-
-    const request = makeRequest("https://test.com/auth/mfa/setup/start", {
-      method: "POST",
-      body: JSON.stringify({ challengeToken: "challenge", method: "totp" }),
-    });
-
-    const response = await startMfaSetupController(request, mockEnv);
-    const data = (await response.json()) as {
-      method: string;
-      secret: string;
-      otpauthUrl: string;
-    };
-
-    expect(response.status).toBe(200);
-    expect(data.method).toBe("totp");
-    expect(data.secret).toMatch(/^[A-Z2-7]+$/);
-    expect(data.otpauthUrl).toContain("otpauth://totp/");
-    expect(mockRepo.updateAuthChallengeMetadata).toHaveBeenCalledWith(
-      1,
-      expect.stringContaining("secretEncrypted"),
-      "totp",
-    );
-  });
-
-  it("should use request URL when creating WebAuthn setup metadata", async () => {
-    mockRepo.getAuthChallengeByTokenHash.mockResolvedValue({
-      id: 3,
-      userId: 10,
-      type: "setup",
-      usedAt: null,
-      expiresAt: Date.now() + 60000,
-      metadata: null,
-    });
-    mockRepo.getUserById.mockResolvedValue({
-      id: 10,
-      email: "user@example.com",
-    });
-    mockRepo.listMfaCredentials.mockResolvedValue([]);
-
-    const request = makeRequest("https://internal.dev/auth/mfa/setup/start", {
-      method: "POST",
-      headers: {
-        Origin: "https://sprintjam.localhost:5173",
+    expect(authMocks.touchSession).toHaveBeenCalledWith("cookie-token");
+    expect(await response.json()).toEqual({
+      user: {
+        id: 12,
+        email: authUser.email,
+        name: authUser.name,
+        avatar: null,
+        organisationId: 2,
       },
+      membership: { role: "member", status: "active" },
+      teams: [
+        expect.objectContaining({ name: "Open team", canAccess: true }),
+        expect.objectContaining({
+          name: "Restricted team",
+          canAccess: false,
+          currentUserStatus: "pending",
+        }),
+      ],
+    });
+  });
+
+  it("rejects a user without an active workspace membership", async () => {
+    repository.getOrganisationMembership.mockResolvedValue({
+      role: "member",
+      status: "pending",
+    });
+
+    const response = await getCurrentUserController(
+      new Request("https://test.com/auth/me", {
+        headers: { Authorization: "Bearer session-token" },
+      }),
+      env,
+    );
+
+    expect(response.status).toBe(403);
+    expect(await response.json()).toEqual(
+      expect.objectContaining({ code: "workspace_access_inactive" }),
+    );
+  });
+
+  it("revokes the raw session token and clears the cookie", async () => {
+    const response = await logoutController(
+      new Request("https://test.com/auth/logout", {
+        method: "POST",
+        headers: { Authorization: "Bearer session-token" },
+      }),
+      env,
+    );
+
+    expect(response.status).toBe(200);
+    expect(authMocks.revokeSession).toHaveBeenCalledWith("session-token");
+    expect(response.headers.get("Set-Cookie")).toContain("Max-Age=0");
+  });
+});
+
+describe("MFA setup controllers", () => {
+  const repository = {
+    deleteMfaCredentialsExcept: vi.fn(),
+    deleteWebAuthnCredentials: vi.fn(),
+    logAuditEvent: vi.fn(),
+    replaceRecoveryCodes: vi.fn(),
+  };
+
+  beforeEach(() => {
+    dependencyMocks.workspaceAuthRepository.mockImplementation(function () {
+      return repository;
+    });
+    authMocks.readChallenge.mockResolvedValue(setupSelection);
+    authMocks.consumeChallenge.mockResolvedValue(setupSelection);
+    authMocks.startOtpSetup.mockResolvedValue({
+      status: "mfa_setup_required",
+      challenge: {
+        kind: "otp_setup",
+        continuationToken: "otp-setup-token",
+        expiresAt: new Date("2026-01-01T00:10:00.000Z"),
+        parameters: {
+          secret: "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567",
+          uri: "otpauth://totp/SprintJam:user@example.com",
+        },
+      },
+    });
+    authMocks.verifyOtpSetup.mockResolvedValue(authenticatedResult);
+    repository.deleteMfaCredentialsExcept.mockResolvedValue(undefined);
+    repository.deleteWebAuthnCredentials.mockResolvedValue(undefined);
+    repository.logAuditEvent.mockResolvedValue(undefined);
+    repository.replaceRecoveryCodes.mockResolvedValue(undefined);
+  });
+
+  it("starts TOTP setup from an MFA selection challenge", async () => {
+    const response = await startMfaSetupController(
+      new Request("https://test.com/auth/mfa/setup/start", {
+        method: "POST",
+        body: JSON.stringify({
+          challengeToken: "selection-token",
+          method: "totp",
+        }),
+      }),
+      env,
+    );
+
+    expect(response.status).toBe(200);
+    expect(authMocks.readChallenge).toHaveBeenCalledWith(
+      "selection-token",
+      "sprintjam",
+      ["mfa_selection"],
+    );
+    expect(authMocks.startOtpSetup).toHaveBeenCalledWith({
+      userId: authUser.id,
+      accountName: authUser.email,
+    });
+    expect(await response.json()).toEqual(
+      expect.objectContaining({
+        challenge: expect.objectContaining({
+          parameters: expect.objectContaining({
+            selectionToken: "selection-token",
+          }),
+        }),
+      }),
+    );
+  });
+
+  it("uses the request context when starting WebAuthn registration", async () => {
+    authMocks.startRegistration.mockResolvedValue({
+      status: "webauthn_challenge_required",
+      challenge: {
+        kind: "webauthn_registration",
+        continuationToken: "registration-token",
+        expiresAt: new Date("2026-01-01T00:10:00.000Z"),
+        parameters: { publicKey: { rp: { id: "internal.dev" } } },
+      },
+    });
+    const request = new Request("https://internal.dev/auth/mfa/setup/start", {
+      method: "POST",
       body: JSON.stringify({
-        challengeToken: "challenge",
+        challengeToken: "selection-token",
         method: "webauthn",
       }),
     });
 
-    const response = await startMfaSetupController(request, mockEnv);
-    const data = (await response.json()) as {
-      method: string;
-      options: { rp: { id: string } };
-    };
+    const response = await startMfaSetupController(request, env);
 
     expect(response.status).toBe(200);
-    expect(data.method).toBe("webauthn");
-    expect(data.options.rp.id).toBe("internal.dev");
-    expect(mockRepo.updateAuthChallengeMetadata).toHaveBeenCalledWith(
-      3,
-      expect.any(String),
-      "webauthn",
+    expect(dependencyMocks.createSprintJamWebAuthnAuth).toHaveBeenCalledWith(
+      request,
+      env,
     );
-
-    const metadataPayload =
-      mockRepo.updateAuthChallengeMetadata.mock.calls[0]?.[1];
-    const metadata = JSON.parse(metadataPayload) as {
-      challenge: string;
-      origin: string;
-      rpId: string;
-    };
-
-    expect(metadata.origin).toBe("https://internal.dev");
-    expect(metadata.rpId).toBe("internal.dev");
-    expect(metadata.challenge).toBeTruthy();
+    expect(authMocks.startRegistration).toHaveBeenCalledWith({
+      userId: authUser.id,
+      userName: authUser.email,
+      displayName: authUser.email,
+    });
   });
 
-  it("should allow setup start when challenge is flagged for MFA reset", async () => {
-    mockRepo.getAuthChallengeByTokenHash.mockResolvedValue({
-      id: 4,
-      userId: 10,
-      type: "setup",
-      usedAt: null,
-      expiresAt: Date.now() + 60000,
-      metadata: JSON.stringify({ allowMfaReset: true }),
-    });
-    mockRepo.getUserById.mockResolvedValue({
-      id: 10,
-      email: "user@example.com",
-    });
-    mockRepo.listMfaCredentials.mockResolvedValue([{ id: 1, type: "totp" }]);
-
-    const request = makeRequest("https://test.com/auth/mfa/setup/start", {
-      method: "POST",
-      body: JSON.stringify({ challengeToken: "challenge", method: "totp" }),
-    });
-
-    const response = await startMfaSetupController(request, mockEnv);
-    const data = (await response.json()) as { method: string };
-
-    expect(response.status).toBe(200);
-    expect(data.method).toBe("totp");
-    expect(mockRepo.updateAuthChallengeMetadata).toHaveBeenCalledWith(
-      4,
-      expect.stringContaining('"allowMfaReset":true'),
-      "totp",
-    );
-  });
-
-  it("should verify TOTP setup and issue a session", async () => {
-    const secret = "JBSWY3DPEHPK3PXP";
-    const cipher = new utils.TokenCipher("test-secret");
-    const secretEncrypted = await cipher.encrypt(secret);
-    const code = await generateTotp(utils.base32Decode(secret), new Date());
-
-    mockRepo.getAuthChallengeByTokenHash.mockResolvedValue({
-      id: 2,
-      userId: 11,
-      type: "setup",
-      usedAt: null,
-      expiresAt: Date.now() + 60000,
-      metadata: JSON.stringify({ secretEncrypted }),
-    });
-    mockRepo.getUserById.mockResolvedValue({
-      id: 11,
-      email: "user@example.com",
-      name: null,
-      organisationId: 1,
-    });
-    mockRepo.listMfaCredentials.mockResolvedValue([]);
-    vi.mocked(utils.hashToken).mockResolvedValue("hashed-session-123");
-
-    const request = makeRequest("https://test.com/auth/mfa/setup/verify", {
-      method: "POST",
-      body: JSON.stringify({
-        challengeToken: "challenge",
-        method: "totp",
-        code,
+  it("verifies TOTP setup only after consuming the setup selection", async () => {
+    const response = await verifyMfaSetupController(
+      new Request("https://test.com/auth/mfa/setup/verify", {
+        method: "POST",
+        body: JSON.stringify({
+          challengeToken: "otp-setup-token",
+          selectionToken: "selection-token",
+          method: "totp",
+          code: "123456",
+        }),
       }),
-    });
-
-    const response = await verifyMfaSetupController(request, mockEnv);
-    const data = (await response.json()) as {
-      status: string;
-      recoveryCodes: string[];
-      user: { id: number };
-    };
+      env,
+    );
 
     expect(response.status).toBe(200);
-    expect(data.status).toBe("authenticated");
-    expect(data.recoveryCodes).toHaveLength(8);
-    expect(mockRepo.createTotpCredential).toHaveBeenCalledWith(
-      11,
-      secretEncrypted,
+    expect(authMocks.consumeChallenge).toHaveBeenCalledWith(
+      "selection-token",
+      "sprintjam",
+      ["mfa_selection"],
     );
-    expect(mockRepo.createSession).toHaveBeenCalledWith(
-      11,
-      "hashed-session-123",
-      expect.any(Number),
+    expect(authMocks.verifyOtpSetup).toHaveBeenCalledWith({
+      token: "otp-setup-token",
+      code: "123456",
+      expectedUserId: authUser.id,
+    });
+    expect(await response.json()).toEqual(
+      expect.objectContaining({
+        status: "authenticated",
+        user: expect.objectContaining({ id: 12 }),
+      }),
     );
-    expect(mockRepo.markAuthChallengeUsed).toHaveBeenCalledWith(2);
+    expect(response.headers.get("Set-Cookie")).toContain("session-token");
   });
 
-  it("should clear existing MFA configuration before storing reset setup", async () => {
-    const secret = "JBSWY3DPEHPK3PXP";
-    const cipher = new utils.TokenCipher("test-secret");
-    const secretEncrypted = await cipher.encrypt(secret);
-    const code = await generateTotp(utils.base32Decode(secret), new Date());
+  it("rejects a verify-mode selection during setup", async () => {
+    authMocks.readChallenge.mockResolvedValue(verifySelection);
 
-    mockRepo.getAuthChallengeByTokenHash.mockResolvedValue({
-      id: 5,
-      userId: 11,
-      type: "setup",
-      usedAt: null,
-      expiresAt: Date.now() + 60000,
-      metadata: JSON.stringify({ secretEncrypted, allowMfaReset: true }),
-    });
-    mockRepo.getUserById.mockResolvedValue({
-      id: 11,
-      email: "user@example.com",
-      name: null,
-      organisationId: 1,
-    });
-    vi.mocked(utils.hashToken).mockResolvedValue("hashed-session-123");
-
-    const request = makeRequest("https://test.com/auth/mfa/setup/verify", {
-      method: "POST",
-      body: JSON.stringify({
-        challengeToken: "challenge",
-        method: "totp",
-        code,
+    const response = await startMfaSetupController(
+      new Request("https://test.com/auth/mfa/setup/start", {
+        method: "POST",
+        body: JSON.stringify({
+          challengeToken: "selection-token",
+          method: "totp",
+        }),
       }),
-    });
-
-    const response = await verifyMfaSetupController(request, mockEnv);
-
-    expect(response.status).toBe(200);
-    expect(mockRepo.resetMfaConfiguration).toHaveBeenCalledWith(11);
-    expect(mockRepo.createTotpCredential).toHaveBeenCalledWith(
-      11,
-      secretEncrypted,
+      env,
     );
+
+    expect(response.status).toBe(400);
+    expect(await response.json()).toEqual(
+      expect.objectContaining({ code: "challenge_mismatch" }),
+    );
+    expect(authMocks.startOtpSetup).not.toHaveBeenCalled();
   });
 });
 
-describe("mfa verify", () => {
-  let mockEnv: AuthWorkerEnv;
-  let mockRepo: any;
+describe("MFA verification controllers", () => {
+  const repository = { logAuditEvent: vi.fn() };
 
   beforeEach(() => {
-    vi.clearAllMocks();
-    mockEnv = {
-      DB: {} as any,
-      TOKEN_ENCRYPTION_SECRET: "test-secret",
-    } as AuthWorkerEnv;
-
-    mockRepo = {
-      getAuthChallengeByTokenHash: vi.fn(),
-      getUserById: vi.fn(),
-      consumeRecoveryCode: vi.fn(),
-      createAuthChallenge: vi.fn(),
-      markAuthChallengeUsed: vi.fn(),
-      logAuditEvent: vi.fn(),
-      createSession: vi.fn(),
-    };
-
-    vi.mocked(WorkspaceAuthRepository).mockImplementation(function () {
-      return mockRepo;
+    dependencyMocks.workspaceAuthRepository.mockImplementation(function () {
+      return repository;
     });
-    vi.mocked(utils.hashToken).mockResolvedValue("hashed-session-123");
-    vi.mocked(utils.generateToken).mockResolvedValue("session-token-123");
+    repository.logAuditEvent.mockResolvedValue(undefined);
+    authMocks.consumeChallenge.mockResolvedValue(verifySelection);
+    authMocks.createChallenge.mockResolvedValue({
+      status: "mfa_challenge_required",
+      challenge: {
+        kind: "otp_challenge",
+        continuationToken: "otp-challenge-token",
+        expiresAt: new Date("2026-01-01T00:10:00.000Z"),
+        parameters: {},
+      },
+    });
+    authMocks.verifyOtpChallenge.mockResolvedValue(authenticatedResult);
+    authMocks.verifyOtpRecoveryCode.mockResolvedValue(authUser);
+    authMocks.issueChallenge.mockResolvedValue({
+      token: "reset-selection-token",
+      expiresAt: new Date("2026-01-01T00:10:00.000Z"),
+    });
   });
 
-  it("logs the underlying WebAuthn verifier error without returning it to the client", async () => {
-    const consoleError = vi
-      .spyOn(console, "error")
-      .mockImplementation(() => {});
-    mockRepo.getAuthChallengeByTokenHash.mockResolvedValue({
-      id: 4,
-      userId: 12,
-      type: "verify",
-      usedAt: null,
-      expiresAt: Date.now() + 60000,
-      metadata: JSON.stringify({
-        challenge: "expected-challenge",
-        origin: "https://staging.sprintjam.co.uk",
-        rpId: "staging.sprintjam.co.uk",
-      }),
-    });
-    mockRepo.getUserById.mockResolvedValue({
-      id: 12,
-      email: "user@example.com",
-      name: null,
-      organisationId: 2,
-    });
-    mockRepo.getWebAuthnCredentialById = vi.fn().mockResolvedValue({
-      id: 9,
-      credentialId: "credential-id",
-      publicKey: "AQID",
-      counter: 0,
-    });
-
-    const request = makeRequest(
-      "https://staging.sprintjam.co.uk/api/auth/mfa/verify",
-      {
+  it("starts a TOTP-or-recovery challenge from a verify selection", async () => {
+    const response = await startMfaVerifyController(
+      new Request("https://test.com/auth/mfa/verify/start", {
         method: "POST",
         body: JSON.stringify({
-          challengeToken: "challenge",
-          method: "webauthn",
-          credential: {
-            id: "credential-id",
-            rawId: "credential-id",
-            type: "public-key",
-            clientExtensionResults: {},
-            response: {
-              clientDataJSON: "invalid-client-data",
-              authenticatorData: "auth-data",
-              signature: "signature",
-            },
-          },
+          challengeToken: "selection-token",
+          method: "totp",
         }),
-      },
+      }),
+      env,
     );
 
-    const response = await verifyMfaController(request, mockEnv);
+    expect(response.status).toBe(200);
+    expect(authMocks.consumeChallenge).toHaveBeenCalledWith(
+      "selection-token",
+      "sprintjam",
+      ["mfa_selection"],
+    );
+    expect(authMocks.createChallenge).toHaveBeenCalledWith(authUser.id);
+    expect(await response.json()).toEqual(
+      expect.objectContaining({
+        challenge: expect.objectContaining({
+          parameters: { method: "totp_or_recovery" },
+        }),
+      }),
+    );
+  });
+
+  it("verifies a numeric TOTP and creates an authenticated response", async () => {
+    const response = await verifyMfaController(
+      new Request("https://test.com/auth/mfa/verify", {
+        method: "POST",
+        body: JSON.stringify({
+          challengeToken: "otp-challenge-token",
+          method: "totp",
+          code: "123456",
+        }),
+      }),
+      env,
+    );
+
+    expect(response.status).toBe(200);
+    expect(authMocks.verifyOtpChallenge).toHaveBeenCalledWith({
+      token: "otp-challenge-token",
+      code: "123456",
+    });
+    expect(authMocks.verifyOtpRecoveryCode).not.toHaveBeenCalled();
+    expect(response.headers.get("Set-Cookie")).toContain("session-token");
+  });
+
+  it("consumes a recovery code and requires fresh MFA setup", async () => {
+    const response = await verifyMfaController(
+      new Request("https://test.com/auth/mfa/verify", {
+        method: "POST",
+        body: JSON.stringify({
+          challengeToken: "otp-challenge-token",
+          method: "totp",
+          code: "ABCD-1234",
+        }),
+      }),
+      env,
+    );
+
+    expect(response.status).toBe(200);
+    expect(authMocks.verifyOtpRecoveryCode).toHaveBeenCalledWith({
+      token: "otp-challenge-token",
+      code: "ABCD-1234",
+    });
+    expect(authMocks.issueChallenge).toHaveBeenCalledWith(
+      "sprintjam",
+      "mfa_selection",
+      {
+        userId: authUser.id,
+        email: authUser.email,
+        mode: "setup",
+        reset: true,
+        availableChallenges: ["totp", "webauthn"],
+      },
+    );
+    expect(await response.json()).toEqual({
+      status: "mfa_setup_required",
+      challenge: {
+        kind: "mfa_selection",
+        continuationToken: "reset-selection-token",
+        expiresAt: "2026-01-01T00:10:00.000Z",
+        parameters: {
+          mode: "setup",
+          reason: "recovery_reset_required",
+          availableChallenges: ["totp", "webauthn"],
+        },
+      },
+    });
+  });
+
+  it("requires a WebAuthn credential before invoking the verifier", async () => {
+    const response = await verifyMfaController(
+      new Request("https://test.com/auth/mfa/verify", {
+        method: "POST",
+        body: JSON.stringify({
+          challengeToken: "webauthn-token",
+          method: "webauthn",
+        }),
+      }),
+      env,
+    );
+
+    expect(response.status).toBe(400);
+    expect(authMocks.finishAuthentication).not.toHaveBeenCalled();
+  });
+
+  it("maps expired challenges without exposing internal state", async () => {
+    authMocks.verifyOtpChallenge.mockRejectedValue(
+      new AuthError("challenge_expired"),
+    );
+
+    const response = await verifyMfaController(
+      new Request("https://test.com/auth/mfa/verify", {
+        method: "POST",
+        body: JSON.stringify({
+          challengeToken: "expired-token",
+          method: "totp",
+          code: "123456",
+        }),
+      }),
+      env,
+    );
 
     expect(response.status).toBe(401);
     expect(await response.json()).toEqual({
-      code: "unauthorized",
-      message: "Unable to verify WebAuthn assertion",
-      error: "Unable to verify WebAuthn assertion",
+      code: "challenge_expired",
+      message: "Authentication challenge expired",
+      error: "Authentication challenge expired",
     });
-    expect(consoleError).toHaveBeenCalledWith(
-      "[auth] WebAuthn assertion verification failed",
-      expect.any(Error),
-    );
-  });
-
-  it("should verify a recovery code and require MFA reset setup", async () => {
-    mockRepo.getAuthChallengeByTokenHash.mockResolvedValue({
-      id: 3,
-      userId: 12,
-      type: "verify",
-      usedAt: null,
-      expiresAt: Date.now() + 60000,
-      metadata: null,
-    });
-    mockRepo.getUserById.mockResolvedValue({
-      id: 12,
-      email: "user@example.com",
-      name: null,
-      organisationId: 2,
-    });
-    mockRepo.consumeRecoveryCode.mockResolvedValue(true);
-
-    const request = makeRequest("https://test.com/auth/mfa/verify", {
-      method: "POST",
-      body: JSON.stringify({
-        challengeToken: "challenge",
-        method: "recovery",
-        code: "ABCD-1234",
-      }),
-    });
-
-    const response = await verifyMfaController(request, mockEnv);
-    const data = (await response.json()) as {
-      status: string;
-      mode: string;
-      reason?: string;
-      challengeToken: string;
-    };
-
-    expect(response.status).toBe(200);
-    expect(data.status).toBe("mfa_required");
-    expect(data.mode).toBe("setup");
-    expect(data.reason).toBe("recovery_reset_required");
-    expect(data.challengeToken).toBe("session-token-123");
-    expect(mockRepo.createAuthChallenge).toHaveBeenCalledWith({
-      userId: 12,
-      tokenHash: "hashed-session-123",
-      type: "setup",
-      metadata: JSON.stringify({ allowMfaReset: true }),
-      expiresAt: expect.any(Number),
-    });
-    expect(mockRepo.markAuthChallengeUsed).toHaveBeenCalledWith(3);
-    expect(mockRepo.createSession).not.toHaveBeenCalled();
   });
 });

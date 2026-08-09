@@ -154,8 +154,8 @@ export function setStructuredVotingCriterionEnabled(
   }
 
   return getStructuredVotingCriteriaPreset({
-    activeCriteriaIds: STRUCTURED_VOTING_CRITERIA.map((criterion) => criterion.id).filter(
-      (id) => currentIds.has(id),
-    ),
+    activeCriteriaIds: STRUCTURED_VOTING_CRITERIA.map(
+      (criterion) => criterion.id,
+    ).filter((id) => currentIds.has(id)),
   });
 }

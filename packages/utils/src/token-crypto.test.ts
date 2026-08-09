@@ -19,6 +19,18 @@ describe("TokenCipher", () => {
     expect(first).not.toBe(second);
   });
 
+  it("authenticates storage context when supplied", async () => {
+    const cipher = new TokenCipher("super-secret");
+    const encrypted = await cipher.encrypt("api-token", "challenge:one");
+
+    await expect(cipher.decrypt(encrypted, "challenge:one")).resolves.toBe(
+      "api-token",
+    );
+    await expect(cipher.decrypt(encrypted, "challenge:two")).rejects.toThrow(
+      "Decryption failed or token integrity compromised",
+    );
+  });
+
   it("rejects malformed payloads", async () => {
     const cipher = new TokenCipher("super-secret");
     await expect(cipher.decrypt("not-json")).rejects.toThrow(

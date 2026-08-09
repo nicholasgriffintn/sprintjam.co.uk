@@ -1,11 +1,11 @@
 import type { AuthWorkerEnv } from "@sprintjam/types";
+import { safeJsonParse } from "@sprintjam/utils";
 
+import { requestWithJsonBody } from "../../lib/request";
 import { jsonError } from "../../lib/response";
 import { adaptAuthUiClientResponse } from "./auth-ui-response";
 import {
-  controllerRequest,
   readAuthUiRequest,
-  readCredential,
   type SupportedAuthUiRequest,
 } from "./auth-ui-request";
 import {
@@ -37,7 +37,7 @@ export async function authUiController(
   const response =
     authRequest.action === "request_magic_link"
       ? await requestMagicLinkController(
-          controllerRequest(request, { email: authRequest.values.email }),
+          requestWithJsonBody(request, { email: authRequest.values.email }),
           env,
         )
       : await continueAuth(request, env, authRequest);
@@ -54,7 +54,7 @@ async function continueAuth(
 
   if (authRequest.kind === "email_otp") {
     return verifyCodeController(
-      controllerRequest(request, {
+      requestWithJsonBody(request, {
         challengeToken: token,
         code: values["code"],
       }),
@@ -67,12 +67,12 @@ async function continueAuth(
       method: values["challenge"],
     };
     return values["mode"] === "setup"
-      ? startMfaSetupController(controllerRequest(request, body), env)
-      : startMfaVerifyController(controllerRequest(request, body), env);
+      ? startMfaSetupController(requestWithJsonBody(request, body), env)
+      : startMfaVerifyController(requestWithJsonBody(request, body), env);
   }
   if (authRequest.kind === "mfa_setup") {
     return verifyMfaSetupController(
-      controllerRequest(request, {
+      requestWithJsonBody(request, {
         challengeToken: token,
         selectionToken: values["selectionToken"],
         method: "totp",
@@ -83,7 +83,7 @@ async function continueAuth(
   }
   if (authRequest.kind === "software_token_mfa") {
     return verifyMfaController(
-      controllerRequest(request, {
+      requestWithJsonBody(request, {
         challengeToken: token,
         method: "totp",
         code: values["code"],
@@ -107,7 +107,10 @@ function continueWebAuthn(
   challengeToken: string,
   values: Readonly<Record<string, string>>,
 ): Promise<Response> {
-  const credential = readCredential(values["credential"]);
+  const credentialValue = values["credential"];
+  const credential = credentialValue
+    ? safeJsonParse<unknown>(credentialValue, { silent: true })
+    : undefined;
   if (!credential) {
     return Promise.resolve(
       jsonError(
@@ -119,7 +122,7 @@ function continueWebAuthn(
   }
   if (values["ceremony"] === "registration") {
     return verifyMfaSetupController(
-      controllerRequest(request, {
+      requestWithJsonBody(request, {
         challengeToken,
         selectionToken: values["selectionToken"],
         method: "webauthn",
@@ -129,7 +132,7 @@ function continueWebAuthn(
     );
   }
   return verifyMfaController(
-    controllerRequest(request, {
+    requestWithJsonBody(request, {
       challengeToken,
       method: "webauthn",
       credential,

@@ -1,4 +1,4 @@
-import { createAuth, type AuthUser } from "@ngriffin_uk/auth-core";
+import { createAuth, type AuthUserWithEmail } from "@ngriffin_uk/auth-core";
 import {
   magicLinkAuth,
   type MagicLinkDelivery,
@@ -19,16 +19,20 @@ import {
   createSprintJamWebAuthnStore,
 } from "../repositories/shared-auth-mfa";
 
-export interface SprintJamAuthUser extends AuthUser {
+export interface SprintJamAuthUser extends AuthUserWithEmail {
   readonly organisationId: number;
   readonly name: string | null;
   readonly workspaceRole: "admin" | "member";
 }
 
-type AuthDatabaseEnv = Pick<AuthWorkerEnv, "DB">;
+type AuthDatabaseEnv = Pick<AuthWorkerEnv, "DB"> &
+  Partial<Pick<AuthWorkerEnv, "TOKEN_ENCRYPTION_SECRET">>;
 
 export function createSprintJamAuth(env: AuthDatabaseEnv) {
-  const stores = createSprintJamCoreAuthStores(env.DB);
+  const stores = createSprintJamCoreAuthStores(
+    env.DB,
+    env.TOKEN_ENCRYPTION_SECRET,
+  );
   return createAuth<SprintJamAuthUser>({
     ...stores,
     sessionTtlMs: SESSION_EXPIRY_MS,
@@ -50,7 +54,10 @@ export function createSprintJamMagicLinkAuth(
     readonly send: (delivery: MagicLinkDelivery) => Promise<void>;
   },
 ) {
-  const stores = createSprintJamCoreAuthStores(env.DB);
+  const stores = createSprintJamCoreAuthStores(
+    env.DB,
+    env.TOKEN_ENCRYPTION_SECRET,
+  );
   return createAuth<SprintJamAuthUser>({
     ...stores,
     sessionTtlMs: SESSION_EXPIRY_MS,

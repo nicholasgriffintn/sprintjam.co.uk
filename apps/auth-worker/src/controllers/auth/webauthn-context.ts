@@ -7,9 +7,7 @@ function isLoopbackHostname(hostname: string): boolean {
   );
 }
 
-function getTrustedLocalhostSubdomainOrigin(
-  request: Request,
-): URL | undefined {
+function getTrustedLocalhostSubdomainOrigin(request: Request): URL | undefined {
   const origin = request.headers.get("Origin");
   if (!origin) return undefined;
 

@@ -30,16 +30,24 @@ describe("RoomSettingsTabs structured criteria", () => {
     );
 
     expect(
-      screen.getByTestId("structured-field-complexity").hasAttribute("data-checked"),
+      screen
+        .getByTestId("structured-field-complexity")
+        .hasAttribute("data-checked"),
     ).toBe(true);
     expect(
-      screen.getByTestId("structured-field-confidence").hasAttribute("data-checked"),
+      screen
+        .getByTestId("structured-field-confidence")
+        .hasAttribute("data-checked"),
     ).toBe(true);
     expect(
-      screen.getByTestId("structured-field-volume").hasAttribute("data-checked"),
+      screen
+        .getByTestId("structured-field-volume")
+        .hasAttribute("data-checked"),
     ).toBe(true);
     expect(
-      screen.getByTestId("structured-field-unknowns").hasAttribute("data-checked"),
+      screen
+        .getByTestId("structured-field-unknowns")
+        .hasAttribute("data-checked"),
     ).toBe(true);
     expect(
       screen.getByTestId("structured-field-risk").hasAttribute("data-checked"),

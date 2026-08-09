@@ -15,6 +15,31 @@ export class WorkspaceAccessError extends Error {
   }
 }
 
+export interface WorkspaceMagicLinkEligibility {
+  readonly allowed: boolean;
+  readonly reason: string;
+}
+
+export async function getWorkspaceMagicLinkEligibility(
+  repo: WorkspaceAuthRepository,
+  email: string,
+): Promise<WorkspaceMagicLinkEligibility> {
+  const domain = extractDomain(email);
+  const [isDomainAllowed, pendingInvite, activeMembership] = await Promise.all([
+    repo.isDomainAllowed(domain),
+    repo.getPendingWorkspaceInviteByEmail(email),
+    repo.getActiveOrganisationMembershipByEmail(email),
+  ]);
+  return {
+    allowed: Boolean(isDomainAllowed || pendingInvite || activeMembership),
+    reason: pendingInvite
+      ? "code_sent_for_invite"
+      : activeMembership
+        ? "code_sent_for_existing_member"
+        : "code_sent",
+  };
+}
+
 export async function resolveWorkspaceAuthUser(
   env: AuthWorkerEnv,
   email: string,
