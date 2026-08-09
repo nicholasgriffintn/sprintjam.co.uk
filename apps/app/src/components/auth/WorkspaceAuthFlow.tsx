@@ -3,12 +3,16 @@ import { useState } from "react";
 import { CheckCircle2 } from "lucide-react";
 
 import { BackButton } from "@/components/auth/BackButton";
-import { BetaBadge } from "@/components/BetaBadge";
-import { SurfaceCard } from "@/components/ui/SurfaceCard";
 import { MfaResetRequestPanel } from "@/components/auth/MfaResetRequestPanel";
+import { BetaBadge } from "@/components/BetaBadge";
+import { Button } from "@/components/ui/Button";
+import { SurfaceCard } from "@/components/ui/SurfaceCard";
 
 export function WorkspaceAuthFlow() {
   const { navigate, returnToChallengeSelection, state } = useAuth();
+  const [resetViewChallengeToken, setResetViewChallengeToken] = useState<
+    string | null
+  >(null);
   const [requestedChallengeToken, setRequestedChallengeToken] = useState<
     string | null
   >(null);
@@ -28,6 +32,8 @@ export function WorkspaceAuthFlow() {
     Boolean(challengeToken);
   const resetRequested =
     Boolean(challengeToken) && requestedChallengeToken === challengeToken;
+  const showResetRequest =
+    canRequestReset && resetViewChallengeToken === challengeToken;
 
   return (
     <>
@@ -62,18 +68,28 @@ export function WorkspaceAuthFlow() {
             </p>
           </div>
         </SurfaceCard>
+      ) : showResetRequest && challengeToken ? (
+        <SurfaceCard>
+          <MfaResetRequestPanel
+            challengeToken={challengeToken}
+            onCancel={() => setResetViewChallengeToken(null)}
+            onRequested={() => setRequestedChallengeToken(challengeToken)}
+          />
+        </SurfaceCard>
       ) : (
-        <>
-          <SurfaceCard>
-            <AuthFlow signInTitleAccessory={<BetaBadge />} />
-          </SurfaceCard>
+        <SurfaceCard>
+          <AuthFlow signInTitleAccessory={<BetaBadge />} />
           {canRequestReset && challengeToken ? (
-            <MfaResetRequestPanel
-              challengeToken={challengeToken}
-              onRequested={() => setRequestedChallengeToken(challengeToken)}
-            />
+            <Button
+              type="button"
+              variant="unstyled"
+              className="mt-4 w-full p-0 text-center text-sm font-medium text-slate-500 underline-offset-4 hover:text-brand-700 hover:underline dark:text-slate-400 dark:hover:text-brand-300"
+              onClick={() => setResetViewChallengeToken(challengeToken)}
+            >
+              Lost access to every method?
+            </Button>
           ) : null}
-        </>
+        </SurfaceCard>
       )}
       {state.view === "sign_in" ? (
         <p className="text-center text-sm text-slate-500 dark:text-slate-400">

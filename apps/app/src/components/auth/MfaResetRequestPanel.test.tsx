@@ -19,6 +19,7 @@ describe("MfaResetRequestPanel", () => {
     render(
       <MfaResetRequestPanel
         challengeToken="verified-challenge"
+        onCancel={vi.fn()}
         onRequested={onRequested}
       />,
     );
@@ -41,6 +42,7 @@ describe("MfaResetRequestPanel", () => {
     render(
       <MfaResetRequestPanel
         challengeToken="expired-challenge"
+        onCancel={vi.fn()}
         onRequested={vi.fn()}
       />,
     );
@@ -51,5 +53,23 @@ describe("MfaResetRequestPanel", () => {
     expect(
       await screen.findByText("Authentication challenge expired"),
     ).toBeTruthy();
+  });
+
+  it("returns to the available verification methods", () => {
+    const onCancel = vi.fn();
+
+    render(
+      <MfaResetRequestPanel
+        challengeToken="verified-challenge"
+        onCancel={onCancel}
+        onRequested={vi.fn()}
+      />,
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Back to verification methods" }),
+    );
+
+    expect(onCancel).toHaveBeenCalledOnce();
   });
 });
