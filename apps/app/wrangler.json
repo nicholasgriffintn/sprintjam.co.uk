@@ -59,20 +59,12 @@
     }
   ],
   "observability": {
-    "enabled": false,
+    "enabled": true,
     "head_sampling_rate": 1,
     "logs": {
-      "enabled": false,
-      "destinations": ["sprint-jam-api-otlp-logs"],
+      "enabled": true,
       "head_sampling_rate": 1,
-      "persist": true,
       "invocation_logs": false
-    },
-    "traces": {
-      "enabled": false,
-      "destinations": ["sprint-jam-api-otlp-traces"],
-      "persist": true,
-      "head_sampling_rate": 1
     }
   },
   "env": {
