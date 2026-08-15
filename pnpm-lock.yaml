@@ -83,8 +83,8 @@ importers:
         specifier: 12.23.26
         version: 12.23.26(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
       isbot:
-        specifier: ^5.1.33
-        version: 5.1.33
+        specifier: ^5.2.1
+        version: 5.2.1
       lucide-react:
         specifier: 0.574.0
         version: 0.574.0(react@19.2.5)
@@ -438,8 +438,8 @@ importers:
         specifier: 0.45.2
         version: 0.45.2(@cloudflare/workers-types@4.20260702.1)(@opentelemetry/api@1.9.1)
       isbot:
-        specifier: ^5.1.33
-        version: 5.1.33
+        specifier: ^5.2.1
+        version: 5.2.1
     devDependencies:
       '@cloudflare/workers-types':
         specifier: 4.20260702.1
@@ -2734,8 +2734,8 @@ packages:
   is-potential-custom-element-name@1.0.1:
     resolution: {integrity: sha512-bCYeRA2rVibKZd+s2625gGnGF/t7DSqDs4dP7CrLA1m7jKWz6pps0LpYLJN8Q64HtmPKJ1hrN3nzPNKFEKOUiQ==}
 
-  isbot@5.1.33:
-    resolution: {integrity: sha512-P4Hgb5NqswjkI0J1CM6XKXon/sxKY1SuowE7Qx2hrBhIwICFyXy54mfgB5eMHXsbe/eStzzpbIGNOvGmz+dlKg==}
+  isbot@5.2.1:
+    resolution: {integrity: sha512-dJ+LpKyClQZ7NG+j3OensC/mAZkGpukE9YUrgPYvAZj2doVL0edfDgywTUh5CXa0o+nW9a1V9e5+CJTX8+SxRw==}
     engines: {node: '>=18'}
 
   istanbul-lib-coverage@3.2.2:
@@ -4494,7 +4494,7 @@ snapshots:
       dedent: 1.7.2
       es-module-lexer: 1.7.0
       exit-hook: 2.2.1
-      isbot: 5.1.33
+      isbot: 5.2.1
       jsesc: 3.0.2
       lodash: 4.18.1
       p-map: 7.0.6
@@ -5544,7 +5544,7 @@ snapshots:
 
   is-potential-custom-element-name@1.0.1: {}
 
-  isbot@5.1.33: {}
+  isbot@5.2.1: {}
 
   istanbul-lib-coverage@3.2.2: {}
 
