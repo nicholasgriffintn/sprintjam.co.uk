@@ -42,7 +42,7 @@ importers:
     dependencies:
       '@base-ui/react':
         specifier: ^1.2.0
-        version: 1.2.0(@types/react@19.2.14)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
+        version: 1.2.0(@types/react@19.2.14)(react-dom@19.2.8(react@19.2.5))(react@19.2.5)
       '@ngriffin_uk/auth-encoding':
         specifier: ^0.2.4
         version: 0.2.4
@@ -81,7 +81,7 @@ importers:
         version: 1.9.4
       framer-motion:
         specifier: 12.23.26
-        version: 12.23.26(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
+        version: 12.23.26(react-dom@19.2.8(react@19.2.5))(react@19.2.5)
       isbot:
         specifier: ^5.1.33
         version: 5.1.33
@@ -95,11 +95,11 @@ importers:
         specifier: 19.2.5
         version: 19.2.5
       react-dom:
-        specifier: 19.2.5
-        version: 19.2.5(react@19.2.5)
+        specifier: 19.2.8
+        version: 19.2.8(react@19.2.5)
       react-router:
         specifier: ^7.18.2
-        version: 7.18.2(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
+        version: 7.18.2(react-dom@19.2.8(react@19.2.5))(react@19.2.5)
       tailwindcss:
         specifier: 4.1.14
         version: 4.1.14
@@ -121,13 +121,13 @@ importers:
         version: 1.57.0
       '@react-router/dev':
         specifier: ^7.18.2
-        version: 7.18.2(@types/node@25.0.3)(jiti@2.7.0)(lightningcss@1.32.0)(react-router@7.18.2(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(typescript@5.9.3)(vite@7.3.5(@types/node@25.0.3)(jiti@2.7.0)(lightningcss@1.32.0))(wrangler@4.107.1(@cloudflare/workers-types@4.20260702.1))
+        version: 7.18.2(@types/node@25.0.3)(jiti@2.7.0)(lightningcss@1.32.0)(react-router@7.18.2(react-dom@19.2.8(react@19.2.5))(react@19.2.5))(typescript@5.9.3)(vite@7.3.5(@types/node@25.0.3)(jiti@2.7.0)(lightningcss@1.32.0))(wrangler@4.107.1(@cloudflare/workers-types@4.20260702.1))
       '@tailwindcss/vite':
         specifier: 4.2.4
         version: 4.2.4(vite@7.3.5(@types/node@25.0.3)(jiti@2.7.0)(lightningcss@1.32.0))
       '@testing-library/react':
         specifier: 16.3.2
-        version: 16.3.2(@testing-library/dom@10.4.1)(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
+        version: 16.3.2(@testing-library/dom@10.4.1)(@types/react-dom@19.2.4(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.8(react@19.2.5))(react@19.2.5)
       '@types/node':
         specifier: 25.0.3
         version: 25.0.3
@@ -135,8 +135,8 @@ importers:
         specifier: 19.2.14
         version: 19.2.14
       '@types/react-dom':
-        specifier: 19.2.3
-        version: 19.2.3(@types/react@19.2.14)
+        specifier: 19.2.4
+        version: 19.2.4(@types/react@19.2.14)
       '@vitejs/plugin-react':
         specifier: 5.1.2
         version: 5.1.2(vite@7.3.5(@types/node@25.0.3)(jiti@2.7.0)(lightningcss@1.32.0))
@@ -2263,8 +2263,8 @@ packages:
   '@types/node@25.0.3':
     resolution: {integrity: sha512-W609buLVRVmeW693xKfzHeIV6nJGGz98uCPfeXI1ELMLXVeKYZ9m15fAMSaUPBHYLGFsVRcMmSCksQOrZV9BYA==}
 
-  '@types/react-dom@19.2.3':
-    resolution: {integrity: sha512-jp2L/eY6fn+KgVVQAOqYItbF0VY/YApe5Mz2F0aykSO8gx31bYCZyvSeYxCHKvzHG5eZjc+zyaS5BrBWya2+kQ==}
+  '@types/react-dom@19.2.4':
+    resolution: {integrity: sha512-Bsc+QHgp+P/F02XDzNCY9jnZNCUuLki36KT7VKrTXXLdHf+vHMNZnW1rVu5DNW/rCK+fya3DATySbLM4yhtKUw==}
     peerDependencies:
       '@types/react': ^19.2.0
 
@@ -3010,10 +3010,10 @@ packages:
     peerDependencies:
       react: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
 
-  react-dom@19.2.5:
-    resolution: {integrity: sha512-J5bAZz+DXMMwW/wV3xzKke59Af6CHY7G4uYLN1OvBcKEsWOs4pQExj86BBKamxl/Ik5bx9whOrvBlSDfWzgSag==}
+  react-dom@19.2.8:
+    resolution: {integrity: sha512-rVprimfGBG3DR+Tq0IQG2DT5PxKth1WIGDmj5yPmlzr4YBe7uyE+Du4oVqTDXZSHGGGXRtTJEGSSePyQCMBglQ==}
     peerDependencies:
-      react: ^19.2.5
+      react: ^19.2.8
 
   react-is@17.0.2:
     resolution: {integrity: sha512-w2GsyukL62IJnlaff/nRegPQR94C/XXamvMWmSHRJ4y7Ts/4ocGRmTHvOs8PSE6pB3dWOrD/nueuU5sduBsQ4w==}
@@ -3806,25 +3806,25 @@ snapshots:
       '@babel/helper-string-parser': 7.29.7
       '@babel/helper-validator-identifier': 7.29.7
 
-  '@base-ui/react@1.2.0(@types/react@19.2.14)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)':
+  '@base-ui/react@1.2.0(@types/react@19.2.14)(react-dom@19.2.8(react@19.2.5))(react@19.2.5)':
     dependencies:
       '@babel/runtime': 7.28.6
-      '@base-ui/utils': 0.2.5(@types/react@19.2.14)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
-      '@floating-ui/react-dom': 2.1.7(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
+      '@base-ui/utils': 0.2.5(@types/react@19.2.14)(react-dom@19.2.8(react@19.2.5))(react@19.2.5)
+      '@floating-ui/react-dom': 2.1.7(react-dom@19.2.8(react@19.2.5))(react@19.2.5)
       '@floating-ui/utils': 0.2.10
       react: 19.2.5
-      react-dom: 19.2.5(react@19.2.5)
+      react-dom: 19.2.8(react@19.2.5)
       tabbable: 6.4.0
       use-sync-external-store: 1.6.0(react@19.2.5)
     optionalDependencies:
       '@types/react': 19.2.14
 
-  '@base-ui/utils@0.2.5(@types/react@19.2.14)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)':
+  '@base-ui/utils@0.2.5(@types/react@19.2.14)(react-dom@19.2.8(react@19.2.5))(react@19.2.5)':
     dependencies:
       '@babel/runtime': 7.28.6
       '@floating-ui/utils': 0.2.10
       react: 19.2.5
-      react-dom: 19.2.5(react@19.2.5)
+      react-dom: 19.2.8(react@19.2.5)
       reselect: 5.1.1
       use-sync-external-store: 1.6.0(react@19.2.5)
     optionalDependencies:
@@ -4224,11 +4224,11 @@ snapshots:
       '@floating-ui/core': 1.7.4
       '@floating-ui/utils': 0.2.10
 
-  '@floating-ui/react-dom@2.1.7(react-dom@19.2.5(react@19.2.5))(react@19.2.5)':
+  '@floating-ui/react-dom@2.1.7(react-dom@19.2.8(react@19.2.5))(react@19.2.5)':
     dependencies:
       '@floating-ui/dom': 1.7.5
       react: 19.2.5
-      react-dom: 19.2.5(react@19.2.5)
+      react-dom: 19.2.8(react@19.2.5)
 
   '@floating-ui/utils@0.2.10': {}
 
@@ -4477,7 +4477,7 @@ snapshots:
 
   '@poppinss/exception@1.2.3': {}
 
-  '@react-router/dev@7.18.2(@types/node@25.0.3)(jiti@2.7.0)(lightningcss@1.32.0)(react-router@7.18.2(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(typescript@5.9.3)(vite@7.3.5(@types/node@25.0.3)(jiti@2.7.0)(lightningcss@1.32.0))(wrangler@4.107.1(@cloudflare/workers-types@4.20260702.1))':
+  '@react-router/dev@7.18.2(@types/node@25.0.3)(jiti@2.7.0)(lightningcss@1.32.0)(react-router@7.18.2(react-dom@19.2.8(react@19.2.5))(react@19.2.5))(typescript@5.9.3)(vite@7.3.5(@types/node@25.0.3)(jiti@2.7.0)(lightningcss@1.32.0))(wrangler@4.107.1(@cloudflare/workers-types@4.20260702.1))':
     dependencies:
       '@babel/core': 7.29.7
       '@babel/generator': 7.29.8
@@ -4486,7 +4486,7 @@ snapshots:
       '@babel/preset-typescript': 7.29.7(@babel/core@7.29.7)
       '@babel/traverse': 7.29.8
       '@babel/types': 7.29.8
-      '@react-router/node': 7.18.2(react-router@7.18.2(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(typescript@5.9.3)
+      '@react-router/node': 7.18.2(react-router@7.18.2(react-dom@19.2.8(react@19.2.5))(react@19.2.5))(typescript@5.9.3)
       '@remix-run/node-fetch-server': 0.13.3
       arg: 5.0.2
       babel-dead-code-elimination: 1.0.12
@@ -4503,7 +4503,7 @@ snapshots:
       pkg-types: 2.3.1
       prettier: 3.9.6
       react-refresh: 0.14.2
-      react-router: 7.18.2(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
+      react-router: 7.18.2(react-dom@19.2.8(react@19.2.5))(react@19.2.5)
       semver: 7.8.5
       tinyglobby: 0.2.17
       valibot: 1.4.2(typescript@5.9.3)
@@ -4527,10 +4527,10 @@ snapshots:
       - tsx
       - yaml
 
-  '@react-router/node@7.18.2(react-router@7.18.2(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(typescript@5.9.3)':
+  '@react-router/node@7.18.2(react-router@7.18.2(react-dom@19.2.8(react@19.2.5))(react@19.2.5))(typescript@5.9.3)':
     dependencies:
       '@mjackson/node-fetch-server': 0.2.0
-      react-router: 7.18.2(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
+      react-router: 7.18.2(react-dom@19.2.8(react@19.2.5))(react@19.2.5)
     optionalDependencies:
       typescript: 5.9.3
 
@@ -4861,15 +4861,15 @@ snapshots:
       picocolors: 1.1.1
       pretty-format: 27.5.1
 
-  '@testing-library/react@16.3.2(@testing-library/dom@10.4.1)(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)':
+  '@testing-library/react@16.3.2(@testing-library/dom@10.4.1)(@types/react-dom@19.2.4(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.8(react@19.2.5))(react@19.2.5)':
     dependencies:
       '@babel/runtime': 7.28.6
       '@testing-library/dom': 10.4.1
       react: 19.2.5
-      react-dom: 19.2.5(react@19.2.5)
+      react-dom: 19.2.8(react@19.2.5)
     optionalDependencies:
       '@types/react': 19.2.14
-      '@types/react-dom': 19.2.3(@types/react@19.2.14)
+      '@types/react-dom': 19.2.4(@types/react@19.2.14)
 
   '@tonaljs/abc-notation@4.9.1':
     dependencies:
@@ -5098,7 +5098,7 @@ snapshots:
     dependencies:
       undici-types: 7.16.0
 
-  '@types/react-dom@19.2.3(@types/react@19.2.14)':
+  '@types/react-dom@19.2.4(@types/react@19.2.14)':
     dependencies:
       '@types/react': 19.2.14
 
@@ -5489,14 +5489,14 @@ snapshots:
 
   fraction.js@5.3.4: {}
 
-  framer-motion@12.23.26(react-dom@19.2.5(react@19.2.5))(react@19.2.5):
+  framer-motion@12.23.26(react-dom@19.2.8(react@19.2.5))(react@19.2.5):
     dependencies:
       motion-dom: 12.23.23
       motion-utils: 12.23.6
       tslib: 2.8.1
     optionalDependencies:
       react: 19.2.5
-      react-dom: 19.2.5(react@19.2.5)
+      react-dom: 19.2.8(react@19.2.5)
 
   fsevents@2.3.2:
     optional: true
@@ -5783,7 +5783,7 @@ snapshots:
     dependencies:
       react: 19.2.5
 
-  react-dom@19.2.5(react@19.2.5):
+  react-dom@19.2.8(react@19.2.5):
     dependencies:
       react: 19.2.5
       scheduler: 0.27.0
@@ -5794,13 +5794,13 @@ snapshots:
 
   react-refresh@0.18.0: {}
 
-  react-router@7.18.2(react-dom@19.2.5(react@19.2.5))(react@19.2.5):
+  react-router@7.18.2(react-dom@19.2.8(react@19.2.5))(react@19.2.5):
     dependencies:
       cookie: 1.1.1
       react: 19.2.5
       set-cookie-parser: 2.7.2
     optionalDependencies:
-      react-dom: 19.2.5(react@19.2.5)
+      react-dom: 19.2.8(react@19.2.5)
 
   react@19.2.5: {}
 
