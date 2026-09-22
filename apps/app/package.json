@@ -51,7 +51,7 @@
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.11.1",
-    "@cloudflare/vite-plugin": "1.43.1",
+    "@cloudflare/vite-plugin": "1.57.3",
     "@cloudflare/workers-types": "5.20260922.1",
     "@playwright/test": "1.57.0",
     "@react-router/dev": "^7.18.2",

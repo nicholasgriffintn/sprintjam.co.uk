@@ -46,10 +46,10 @@ jobs:
           set -o pipefail
           output="$(pnpm exec wrangler preview --name "pr-${{ github.event.pull_request.number }}" --json)"
           printf '%s\n' "$output"
-          preview_url="$(printf '%s' "$output" | jq -er '.preview_urls | map(select(endswith(".sprintjam.co.uk"))) | first')"
+          json="$(printf '%s\n' "$output" | sed -n '/^{/,$p')"
+          preview_url="$(printf '%s' "$json" | jq -er '(.preview_urls // .preview.urls) | map(select(endswith(".sprintjam.co.uk"))) | first')"
           echo "preview_url=$preview_url" >> "$GITHUB_OUTPUT"
         env:
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
 
       - name: Probe Preview
@@ -96,5 +96,4 @@ jobs:
           --name "pr-${{ github.event.pull_request.number }}"
           --skip-confirmation
         env:
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
