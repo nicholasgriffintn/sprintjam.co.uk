@@ -13,6 +13,7 @@
     "format:check": "prettier --check .",
     "test": "turbo test",
     "test:e2e": "turbo test:e2e",
+    "preview": "pnpm --filter @sprintjam/app preview",
     "deploy": "turbo deploy",
     "deploy:staging": "turbo run deploy:staging --filter=\"...[HEAD^]\"",
     "deploy:prod": "turbo run deploy:prod --filter=\"...[HEAD^]\"",
@@ -29,7 +30,7 @@
     "sherif": "1.9.0",
     "turbo": "2.8.10",
     "typescript": "5.9.3",
-    "wrangler": "4.107.1"
+    "wrangler": "4.136.3"
   },
   "packageManager": "pnpm@10.27.0"
 }

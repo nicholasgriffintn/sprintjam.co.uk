@@ -18,6 +18,7 @@
     "test:e2e:a11y": "PLAYWRIGHT_RUN_A11Y=1 pnpm test:e2e tests/e2e/a11y",
     "build": "react-router build",
     "build:staging": "CLOUDFLARE_ENV=staging react-router build",
+    "preview": "pnpm build && wrangler preview",
     "deploy": "wrangler deploy",
     "deploy:staging": "wrangler deploy --env staging",
     "deploy:prod": "wrangler deploy",
@@ -28,7 +29,7 @@
     "@base-ui/react": "^1.2.0",
     "@ngriffin_uk/auth-encoding": "^0.2.4",
     "@ngriffin_uk/auth-react": "^0.7.1",
-    "@sentry/cloudflare": "^10.64.0",
+    "@sentry/cloudflare": "^10.75.2",
     "@sentry/react": "^10.36.0",
     "@sprintjam/types": "workspace:*",
     "@sprintjam/utils": "workspace:*",
@@ -51,7 +52,7 @@
   "devDependencies": {
     "@axe-core/playwright": "^4.11.1",
     "@cloudflare/vite-plugin": "1.43.1",
-    "@cloudflare/workers-types": "4.20260702.1",
+    "@cloudflare/workers-types": "5.20260922.1",
     "@playwright/test": "1.57.0",
     "@react-router/dev": "^7.18.2",
     "@tailwindcss/vite": "4.2.4",
@@ -64,6 +65,6 @@
     "typescript": "5.9.3",
     "vite": "7.3.5",
     "vitest": "4.1.10",
-    "wrangler": "4.107.1"
+    "wrangler": "4.136.3"
   }
 }

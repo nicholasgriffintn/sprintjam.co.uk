@@ -88,6 +88,14 @@ describe("isAllowedOrigin", () => {
     expect(isAllowedOrigin("https://staging.sprintjam.co.uk")).toBe(true);
   });
 
+  it("returns true for a Worker Preview origin", () => {
+    expect(isAllowedOrigin("https://pr-123.sprintjam.co.uk")).toBe(true);
+  });
+
+  it("returns false for nested subdomains of the preview zone", () => {
+    expect(isAllowedOrigin("https://pr-123.evil.sprintjam.co.uk")).toBe(false);
+  });
+
   it("returns false for unknown origin in production mode", () => {
     expect(isAllowedOrigin("https://evil.com")).toBe(false);
   });

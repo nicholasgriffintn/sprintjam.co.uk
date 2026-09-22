@@ -280,6 +280,8 @@ const ALLOWED_ORIGINS = [
   "https://sprintjam.co.uk",
   "https://staging.sprintjam.co.uk",
 ];
+const PREVIEW_ORIGIN_PATTERN =
+  /^https:\/\/[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.sprintjam\.co\.uk$/;
 
 const DEV_ORIGIN_PATTERNS = [
   /^https?:\/\/localhost(:\d+)?$/,
@@ -295,7 +297,10 @@ export function isAllowedOrigin(
     return false;
   }
 
-  if ((ALLOWED_ORIGINS as readonly string[]).includes(origin)) {
+  if (
+    (ALLOWED_ORIGINS as readonly string[]).includes(origin) ||
+    PREVIEW_ORIGIN_PATTERN.test(origin)
+  ) {
     return true;
   }
 
