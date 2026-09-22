@@ -10,7 +10,6 @@ concurrency:
 
 permissions:
   contents: read
-  pull-requests: write
 
 jobs:
   deploy:
@@ -20,15 +19,6 @@ jobs:
       github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     steps:
-      - name: Confirm Preview access is protected
-        env:
-          PREVIEW_ACCESS_READY: ${{ vars.CLOUDFLARE_PREVIEW_ACCESS_READY }}
-        run: |
-          if [ "$PREVIEW_ACCESS_READY" != "true" ]; then
-            echo "::error title=Preview access not configured::Protect the sprintjam Worker's Previews with Cloudflare Access, then set the CLOUDFLARE_PREVIEW_ACCESS_READY repository variable to true."
-            exit 1
-          fi
-
       - name: Checkout repository
         uses: actions/checkout@v6
 
@@ -49,30 +39,10 @@ jobs:
         run: pnpm --filter @sprintjam/app build
 
       - name: Create or update Preview
-        id: preview
         working-directory: apps/app
-        run: |
-          set -o pipefail
-          output="$(pnpm exec wrangler preview --name "pr-${{ github.event.pull_request.number }}" --json)"
-          printf '%s\n' "$output"
-          json="$(printf '%s\n' "$output" | sed -n '/^{/,$p')"
-          if ! preview_url="$(printf '%s' "$json" | jq -er '(.preview_urls // .preview.urls) | map(select(endswith(".sprintjam.co.uk"))) | first')"; then
-            pnpm exec wrangler preview delete --name "pr-${{ github.event.pull_request.number }}" --skip-confirmation
-            echo "::error title=Cloudflare Preview domain disabled::Enable sprintjam.co.uk for Production and Preview in the Worker's Domains settings, then rerun this job."
-            exit 1
-          fi
-          echo "preview_url=$preview_url" >> "$GITHUB_OUTPUT"
+        run: pnpm exec wrangler preview --name "pr-${{ github.event.pull_request.number }}"
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-
-      - name: Comment Preview URL
-        run: >-
-          gh pr comment "${{ github.event.pull_request.number }}"
-          --body "Cloudflare Worker Preview: ${{ steps.preview.outputs.preview_url }} (uses production backend data)"
-          --edit-last
-          --create-if-none
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   cleanup:
     name: Delete Preview
