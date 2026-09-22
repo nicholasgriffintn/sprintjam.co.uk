@@ -107,56 +107,6 @@
         }
       ],
       "ratelimits": []
-    },
-    "staging": {
-      "vars": {
-        "ENVIRONMENT": "staging",
-        "ENABLE_JOIN_RATE_LIMIT": "true"
-      },
-      "durable_objects": {
-        "bindings": [
-          {
-            "name": "PLANNING_ROOM",
-            "class_name": "PlanningRoom"
-          }
-        ]
-      },
-      "services": [
-        {
-          "binding": "STATS_WORKER",
-          "service": "sprintjam-stats-worker-staging"
-        },
-        {
-          "binding": "AUTH_WORKER",
-          "service": "sprintjam-auth-worker-staging"
-        }
-      ],
-      "ratelimits": [
-        {
-          "name": "JOIN_RATE_LIMITER",
-          "namespace_id": "1001",
-          "simple": {
-            "limit": 5,
-            "period": 60
-          }
-        },
-        {
-          "name": "FEEDBACK_RATE_LIMITER",
-          "namespace_id": "1002",
-          "simple": {
-            "limit": 1,
-            "period": 60
-          }
-        },
-        {
-          "name": "OAUTH_RATE_LIMITER",
-          "namespace_id": "1005",
-          "simple": {
-            "limit": 10,
-            "period": 60
-          }
-        }
-      ]
     }
   }
 }

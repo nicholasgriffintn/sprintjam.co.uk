@@ -60,27 +60,27 @@
     "services": [
       {
         "binding": "ROOM_WORKER",
-        "service": "sprintjam-room-worker-staging"
+        "service": "sprintjam-room-worker"
       },
       {
         "binding": "WHEEL_WORKER",
-        "service": "sprintjam-wheel-worker-staging"
+        "service": "sprintjam-wheel-worker"
       },
       {
         "binding": "AUTH_WORKER",
-        "service": "sprintjam-auth-worker-staging"
+        "service": "sprintjam-auth-worker"
       },
       {
         "binding": "STATS_WORKER",
-        "service": "sprintjam-stats-worker-staging"
+        "service": "sprintjam-stats-worker"
       },
       {
         "binding": "STANDUP_WORKER",
-        "service": "sprintjam-standup-worker-staging"
+        "service": "sprintjam-standup-worker"
       },
       {
         "binding": "RETRO_WORKER",
-        "service": "sprintjam-retro-worker-staging"
+        "service": "sprintjam-retro-worker"
       }
     ]
   },
@@ -136,44 +136,6 @@
         }
       ],
       "migrations": []
-    },
-    "staging": {
-      "name": "sprintjam-staging",
-      "vars": {
-        "ENVIRONMENT": "staging"
-      },
-      "routes": [
-        {
-          "pattern": "staging.sprintjam.co.uk",
-          "custom_domain": true
-        }
-      ],
-      "services": [
-        {
-          "binding": "ROOM_WORKER",
-          "service": "sprintjam-room-worker-staging"
-        },
-        {
-          "binding": "AUTH_WORKER",
-          "service": "sprintjam-auth-worker-staging"
-        },
-        {
-          "binding": "STATS_WORKER",
-          "service": "sprintjam-stats-worker-staging"
-        },
-        {
-          "binding": "WHEEL_WORKER",
-          "service": "sprintjam-wheel-worker-staging"
-        },
-        {
-          "binding": "STANDUP_WORKER",
-          "service": "sprintjam-standup-worker-staging"
-        },
-        {
-          "binding": "RETRO_WORKER",
-          "service": "sprintjam-retro-worker-staging"
-        }
-      ]
     }
   }
 }

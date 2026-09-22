@@ -84,10 +84,6 @@ describe("isAllowedOrigin", () => {
     expect(isAllowedOrigin("https://sprintjam.co.uk")).toBe(true);
   });
 
-  it("returns true for staging origin", () => {
-    expect(isAllowedOrigin("https://staging.sprintjam.co.uk")).toBe(true);
-  });
-
   it("returns true for a Worker Preview origin", () => {
     expect(isAllowedOrigin("https://pr-123.sprintjam.co.uk")).toBe(true);
   });

@@ -204,7 +204,9 @@ Simply visit [sprintjam.co.uk](https://sprintjam.co.uk) and start creating rooms
    pnpm run deploy
    ```
 
-   For staging, use `pnpm run db:migrate:staging` and `pnpm run deploy:staging`.
+   Run `pnpm preview` from a branch for a temporary Worker Preview. Wrangler uses the branch name for its stable Preview URL. Delete it when you are done with `pnpm --filter @sprintjam/app exec wrangler preview delete`.
+
+   Previews use the production backend Workers and can change live data. Protect the `sprintjam` Worker's Previews with Cloudflare Access before sharing a URL, and avoid testing against active workspaces. Cloudflare does not yet bind one Worker's Preview to another Worker's Preview.
 
 ## Development
 

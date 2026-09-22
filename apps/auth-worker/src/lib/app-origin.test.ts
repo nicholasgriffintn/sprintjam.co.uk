@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { resolveSprintJamAppOrigin } from "./app-origin";
 
 describe("resolveSprintJamAppOrigin", () => {
-  it("uses known production and staging origins", () => {
+  it("uses production and preview origins", () => {
     expect(
       resolveSprintJamAppOrigin(
         new Request("https://sprintjam.co.uk/api/auth"),
@@ -12,10 +12,10 @@ describe("resolveSprintJamAppOrigin", () => {
     ).toBe("https://sprintjam.co.uk");
     expect(
       resolveSprintJamAppOrigin(
-        new Request("https://staging.sprintjam.co.uk/api/auth"),
-        "staging",
+        new Request("https://pr-123.sprintjam.co.uk/api/auth"),
+        "preview",
       ),
-    ).toBe("https://staging.sprintjam.co.uk");
+    ).toBe("https://pr-123.sprintjam.co.uk");
   });
 
   it("rejects unexpected hosts and allows localhost only in development", () => {
