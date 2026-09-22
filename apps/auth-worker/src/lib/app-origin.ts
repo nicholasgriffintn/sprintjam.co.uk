@@ -9,7 +9,5 @@ export function resolveSprintJamAppOrigin(
     return requestOrigin;
   }
 
-  return environment === "staging"
-    ? "https://staging.sprintjam.co.uk"
-    : "https://sprintjam.co.uk";
+  return "https://sprintjam.co.uk";
 }

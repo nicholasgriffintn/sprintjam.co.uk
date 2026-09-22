@@ -22,7 +22,7 @@ export default Sentry.withSentry<StatsWorkerEnv, unknown>(
     beforeSendTransaction() {
       return null;
     },
-    enabled: env.ENVIRONMENT === "production" || env.ENVIRONMENT === "staging",
+    enabled: env.ENVIRONMENT === "production",
   }),
   {
     async fetch(request: CfRequest, env: StatsWorkerEnv): Promise<CfResponse> {

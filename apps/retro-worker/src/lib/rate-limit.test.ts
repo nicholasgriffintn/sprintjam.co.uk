@@ -35,7 +35,7 @@ describe("retro rate limiting", () => {
     expect(response).toBeNull();
   });
 
-  it("returns service unavailable when staging rate limit bindings are missing", async () => {
+  it("returns service unavailable when rate limit bindings are missing", async () => {
     const response = await createRateLimit(
       createRequest(),
       createEnv({ RETRO_CREATE_RATE_LIMITER: undefined }),
