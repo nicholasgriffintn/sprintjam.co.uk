@@ -1,6 +1,7 @@
 import { expect, type Page } from "@playwright/test";
 
 import { BasePage } from "./base-page";
+import { clickToNavigate } from "../helpers/navigation";
 
 export class WelcomePage extends BasePage {
   constructor(page: Page) {
@@ -19,22 +20,20 @@ export class WelcomePage extends BasePage {
   }
 
   async startCreateRoom() {
-    const button = this.page.getByTestId("create-room-button");
-    await expect(async () => {
-      await expect(button).toBeEnabled();
-      await button.click();
-      await expect(this.page).toHaveURL(/\/create$/);
-    }).toPass();
+    await clickToNavigate(
+      this.page,
+      this.page.getByTestId("create-room-button"),
+      /\/create$/,
+    );
     await expect(this.page.getByTestId("create-room-submit")).toBeVisible();
   }
 
   async startJoinRoom() {
-    const button = this.page.getByTestId("join-room-button");
-    await expect(async () => {
-      await expect(button).toBeEnabled();
-      await button.click();
-      await expect(this.page).toHaveURL(/\/join$/);
-    }).toPass();
+    await clickToNavigate(
+      this.page,
+      this.page.getByTestId("join-room-button"),
+      /\/join$/,
+    );
     await expect(this.page.getByTestId("join-room-submit")).toBeVisible();
   }
 

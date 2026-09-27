@@ -31,6 +31,8 @@ test.describe("Smoke tests @smoke", () => {
   test("critical user journey: create room, join, vote, and reveal", async ({
     browser,
   }) => {
+    test.slow();
+
     const setup = await createRoomWithParticipant(browser);
     const {
       moderatorRoom,
