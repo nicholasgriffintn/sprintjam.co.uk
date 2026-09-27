@@ -10,17 +10,13 @@ const ENVIRONMENTS = {
     database: "sprintjam-workspaces-staging",
     flags: ["--local", "--persist-to", "../../.data", "--env", "development"],
   },
-  staging: {
-    database: "sprintjam-workspaces-staging",
-    flags: ["--remote", "--env", "staging"],
-  },
   live: {
     database: "sprintjam-workspaces",
     flags: ["--remote"],
   },
 };
 
-const USAGE = `Usage: pnpm mfa:reset -- <user-id> --env <local|staging|live> [--yes]
+const USAGE = `Usage: pnpm mfa:reset -- <user-id> --env <local|live> [--yes]
 
 Completely resets a user's MFA configuration by deleting credentials, recovery
 codes, and setup/verification challenges. The user and active sessions remain.
@@ -74,7 +70,7 @@ export function parseArgs(argv) {
     throw new Error("User ID must be a positive safe integer");
   }
   if (!environment || !(environment in ENVIRONMENTS)) {
-    throw new Error("--env must be one of: local, staging, live");
+    throw new Error("--env must be one of: local, live");
   }
 
   return {

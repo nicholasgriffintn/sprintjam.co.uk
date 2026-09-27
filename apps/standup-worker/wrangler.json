@@ -107,56 +107,6 @@
           }
         ]
       }
-    },
-    "staging": {
-      "vars": {
-        "ENVIRONMENT": "staging",
-        "ENABLE_STANDUP_RATE_LIMIT": "true"
-      },
-      "ratelimits": [
-        {
-          "name": "STANDUP_CREATE_RATE_LIMITER",
-          "namespace_id": "3001",
-          "simple": {
-            "limit": 5,
-            "period": 60
-          }
-        },
-        {
-          "name": "STANDUP_JOIN_RATE_LIMITER",
-          "namespace_id": "3002",
-          "simple": {
-            "limit": 10,
-            "period": 60
-          }
-        },
-        {
-          "name": "STANDUP_IP_RATE_LIMITER",
-          "namespace_id": "3003",
-          "simple": {
-            "limit": 30,
-            "period": 60
-          }
-        }
-      ],
-      "services": [
-        {
-          "binding": "AUTH_WORKER",
-          "service": "sprintjam-auth-worker-staging"
-        },
-        {
-          "binding": "STATS_WORKER",
-          "service": "sprintjam-stats-worker-staging"
-        }
-      ],
-      "durable_objects": {
-        "bindings": [
-          {
-            "name": "STANDUP_ROOM",
-            "class_name": "StandupRoom"
-          }
-        ]
-      }
     }
   }
 }

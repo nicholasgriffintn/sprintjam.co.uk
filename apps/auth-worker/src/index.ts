@@ -19,7 +19,7 @@ export default Sentry.withSentry<AuthWorkerEnv, unknown>(
     beforeSendTransaction() {
       return null;
     },
-    enabled: env.ENVIRONMENT === "production" || env.ENVIRONMENT === "staging",
+    enabled: env.ENVIRONMENT === "production",
   }),
   {
     async fetch(request: Request, env: AuthWorkerEnv): Promise<Response> {

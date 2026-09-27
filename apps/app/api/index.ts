@@ -128,7 +128,7 @@ export default Sentry.withSentry<DispatchWorkerEnv, unknown>(
     beforeSendTransaction() {
       return null;
     },
-    enabled: env.ENVIRONMENT === "production" || env.ENVIRONMENT === "staging",
+    enabled: env.ENVIRONMENT === "production",
   }),
   {
     // @ts-expect-error - types are weird

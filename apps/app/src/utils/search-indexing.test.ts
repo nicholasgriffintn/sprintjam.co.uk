@@ -7,7 +7,7 @@ import {
 } from "./search-indexing";
 
 const productionEnv = { ENVIRONMENT: "production" as const };
-const stagingEnv = { ENVIRONMENT: "staging" as const };
+const previewEnv = { ENVIRONMENT: "preview" as const };
 
 describe("search indexing responses", () => {
   it("allows indexing only on production hosts in production", () => {
@@ -25,8 +25,8 @@ describe("search indexing responses", () => {
     ).toBe(true);
     expect(
       shouldPreventSearchIndexing(
-        stagingEnv,
-        new URL("https://staging.sprintjam.co.uk/"),
+        previewEnv,
+        new URL("https://pr-123.sprintjam.co.uk/"),
       ),
     ).toBe(true);
   });
@@ -44,9 +44,9 @@ describe("search indexing responses", () => {
     );
   });
 
-  it("blocks staging and preview crawling in robots.txt", async () => {
-    const url = new URL("https://staging.sprintjam.co.uk/");
-    const robots = createRobotsTxtResponse(stagingEnv, url);
+  it("blocks preview crawling in robots.txt", async () => {
+    const url = new URL("https://pr-123.sprintjam.co.uk/");
+    const robots = createRobotsTxtResponse(previewEnv, url);
 
     await expect(robots.text()).resolves.toBe("User-agent: *\nDisallow: /");
   });

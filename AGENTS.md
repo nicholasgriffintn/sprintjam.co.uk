@@ -101,9 +101,8 @@ pnpm run test:e2e:a11y    # Only accessibility tests
 
 # Build & Deploy
 pnpm run build            # Production build
-pnpm run build:staging    # Staging build
+pnpm run preview          # Create a temporary Worker Preview
 pnpm run deploy           # Deploy to production
-pnpm run deploy:staging   # Deploy to staging
 ```
 
 ---

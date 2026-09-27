@@ -40,8 +40,8 @@ describe("route sitemap configuration", () => {
   });
 
   it("uses the provided request origin for sitemap locations", () => {
-    expect(getSitemapEntries("https://staging.sprintjam.co.uk")[0]?.loc).toBe(
-      "https://staging.sprintjam.co.uk/",
+    expect(getSitemapEntries("https://pr-123.sprintjam.co.uk")[0]?.loc).toBe(
+      "https://pr-123.sprintjam.co.uk/",
     );
   });
 
