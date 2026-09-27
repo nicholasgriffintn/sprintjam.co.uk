@@ -23,7 +23,7 @@ export default Sentry.withSentry<StandupWorkerEnv, unknown>(
     beforeSendTransaction() {
       return null;
     },
-    enabled: env.ENVIRONMENT === "production" || env.ENVIRONMENT === "staging",
+    enabled: env.ENVIRONMENT === "production",
   }),
   {
     async fetch(

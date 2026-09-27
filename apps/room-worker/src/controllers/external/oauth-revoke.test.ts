@@ -33,7 +33,6 @@ describe("provider revoke controllers", () => {
   beforeEach(() => {
     roomFetch.mockReset();
     fetchMock.mockReset();
-    // @ts-expect-error override global fetch for tests
     global.fetch = fetchMock;
   });
 
