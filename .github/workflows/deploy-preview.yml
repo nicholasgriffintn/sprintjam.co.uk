@@ -22,8 +22,6 @@ jobs:
     permissions:
       contents: read
       pull-requests: write
-    env:
-      WRANGLER_OUTPUT_FILE_PATH: ${{ runner.temp }}/preview-output.jsonl
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
@@ -49,11 +47,13 @@ jobs:
         run: pnpm exec wrangler preview --name "pr-${{ github.event.pull_request.number }}"
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          WRANGLER_OUTPUT_FILE_PATH: ${{ runner.temp }}/preview-output.jsonl
 
       - name: Create or update preview comment
         run: bash .github/scripts/comment-preview.sh
         env:
           GH_TOKEN: ${{ github.token }}
+          WRANGLER_OUTPUT_FILE_PATH: ${{ runner.temp }}/preview-output.jsonl
           PR_NUMBER: ${{ github.event.pull_request.number }}
           PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
 
