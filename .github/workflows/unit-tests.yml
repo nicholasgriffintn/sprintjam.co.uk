@@ -35,3 +35,6 @@ jobs:
 
       - name: Run unit tests
         run: pnpm test
+
+      - name: Test workflow scripts
+        run: node --test .github/scripts/*.test.mjs

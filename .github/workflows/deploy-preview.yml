@@ -16,8 +16,12 @@ jobs:
     name: Deploy Preview
     if: >-
       github.event.action != 'closed' &&
-      github.event.pull_request.head.repo.full_name == github.repository
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      !contains(fromJSON('["dependabot[bot]", "renovate[bot]", "renovate"]'), github.event.pull_request.user.login)
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
@@ -43,12 +47,22 @@ jobs:
         run: pnpm exec wrangler preview --name "pr-${{ github.event.pull_request.number }}"
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          WRANGLER_OUTPUT_FILE_PATH: ${{ runner.temp }}/preview-output.jsonl
+
+      - name: Create or update preview comment
+        run: bash .github/scripts/comment-preview.sh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          WRANGLER_OUTPUT_FILE_PATH: ${{ runner.temp }}/preview-output.jsonl
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
 
   cleanup:
     name: Delete Preview
     if: >-
       github.event.action == 'closed' &&
-      github.event.pull_request.head.repo.full_name == github.repository
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      !contains(fromJSON('["dependabot[bot]", "renovate[bot]", "renovate"]'), github.event.pull_request.user.login)
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
