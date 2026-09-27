@@ -40,6 +40,7 @@ export function ResultsControls({
   onOpenResultsSettings?: () => void;
   onCompleteSession?: () => void;
 }) {
+  const [resetVotesConfirmOpen, setResetVotesConfirmOpen] = useState(false);
   const [showVotesConfirmOpen, setShowVotesConfirmOpen] = useState(false);
   const [showVotesConfirmMessage, setShowVotesConfirmMessage] = useState("");
 
@@ -47,6 +48,15 @@ export function ResultsControls({
   const voteToggleClasses = roomData.showVotes
     ? `${buttonBase} bg-blue-900 text-white shadow-blue-950/40 hover:bg-blue-950 focus-visible:ring-blue-200/80 focus-visible:ring-offset-slate-900/40 dark:bg-blue-500/40 dark:text-blue-200 dark:hover:bg-blue-500/50`
     : `${buttonBase} bg-blue-700 text-white hover:bg-blue-800 focus-visible:ring-blue-200 focus-visible:ring-offset-slate-900/30 dark:bg-blue-500/20 dark:text-blue-200 dark:hover:bg-blue-500/30`;
+
+  const handleResetVotes = () => {
+    if (!roomData.showVotes) {
+      setResetVotesConfirmOpen(true);
+      return;
+    }
+
+    onResetVotes();
+  };
 
   const handleToggleShowVotes = () => {
     if (
@@ -122,7 +132,7 @@ export function ResultsControls({
               type="button"
               variant="unstyled"
               data-testid="reset-votes-button"
-              onClick={onResetVotes}
+              onClick={handleResetVotes}
               className={`${buttonBase} bg-red-600 text-white shadow-red-900/25 hover:bg-red-700 focus-visible:ring-red-200/70 focus-visible:ring-offset-red-950/25 dark:bg-red-500/20 dark:text-red-200 dark:hover:bg-red-500/30 dark:shadow-red-900/10`}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
@@ -188,6 +198,15 @@ export function ResultsControls({
           )}
         </div>
       </div>
+      <ConfirmDialog
+        open={resetVotesConfirmOpen}
+        onOpenChange={setResetVotesConfirmOpen}
+        title="Reset hidden votes?"
+        description="Votes are still hidden. Resetting now will clear all votes before the team has reviewed them. This cannot be undone."
+        confirmLabel="Reset votes"
+        onConfirm={onResetVotes}
+        variant="destructive"
+      />
       <ConfirmDialog
         open={showVotesConfirmOpen}
         onOpenChange={setShowVotesConfirmOpen}
