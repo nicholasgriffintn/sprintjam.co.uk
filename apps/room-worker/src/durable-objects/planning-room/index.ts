@@ -55,6 +55,7 @@ import {
   handleStartTimer as handleStartTimerHandler,
 } from "./timer";
 import { handleCompleteSession as handleCompleteSessionHandler } from "./status";
+import { handleToggleSpectator as handleToggleSpectatorHandler } from "./spectator";
 import {
   handleEndGame as handleEndGameHandler,
   handleStartGame as handleStartGameHandler,
@@ -261,20 +262,7 @@ export class PlanningRoom implements PlanningRoomHttpContext {
   }
 
   async handleToggleSpectator(userName: string, isSpectator: boolean) {
-    this.repository.setUserSpectatorMode(userName, isSpectator);
-
-    if (isSpectator) {
-      this.repository.deleteUserVote(userName);
-    }
-
-    const broadcastRoomData = await this.getRoomData();
-    this.broadcast({
-      type: "spectatorStatusChanged",
-      user: userName,
-      isSpectator,
-      users: broadcastRoomData?.users ?? [],
-      spectators: broadcastRoomData?.spectators ?? [],
-    });
+    return handleToggleSpectatorHandler(this, userName, isSpectator);
   }
 
   async handleCompleteSession(userName: string) {
