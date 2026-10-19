@@ -9,7 +9,7 @@ interface VotesHiddenProps {
   isStructuredVotingEnabled?: boolean;
   users: RoomData["users"];
   currentUserName: string;
-  isAnonymousVoting?: boolean;
+  currentUserVoteKey: string;
 }
 
 export function VotesHidden({
@@ -18,21 +18,12 @@ export function VotesHidden({
   isStructuredVotingEnabled,
   users,
   currentUserName,
-  isAnonymousVoting,
+  currentUserVoteKey,
 }: VotesHiddenProps) {
-  const getVoteKeyForUser = (userName: string) => {
-    if (isAnonymousVoting) {
-      const index = users.indexOf(userName);
-      return index === -1 ? "Anonymous" : `Anonymous ${index + 1}`;
-    }
-    return userName;
-  };
-
-  const currentUserKey = getVoteKeyForUser(currentUserName);
   const currentClassicVote =
-    votes[currentUserKey] ?? votes[currentUserName] ?? null;
+    votes[currentUserVoteKey] ?? votes[currentUserName] ?? null;
   const currentStructuredVote =
-    structuredVotes?.[currentUserKey] ??
+    structuredVotes?.[currentUserVoteKey] ??
     structuredVotes?.[currentUserName] ??
     undefined;
   const hasUserVote =

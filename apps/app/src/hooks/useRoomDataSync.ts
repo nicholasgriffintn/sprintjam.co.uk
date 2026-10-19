@@ -32,12 +32,10 @@ export const useRoomDataSync = ({
       return;
     }
 
-    const nextVote = roomData.votes[name] ?? null;
-    const anonymousVote =
-      roomData.settings.anonymousVotes && roomData.users.length > 0
-        ? (roomData.votes[getVoteKeyForUser(roomData, name)] ?? null)
-        : null;
-    const resolvedVote = anonymousVote ?? nextVote;
+    const resolvedVote =
+      roomData.votes[getVoteKeyForUser(roomData, name)] ??
+      roomData.votes[name] ??
+      null;
     if (resolvedVote !== userVote) {
       onVoteChange(resolvedVote);
     }

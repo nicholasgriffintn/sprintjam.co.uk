@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import type { VotingCompletion } from "@sprintjam/types";
-import { applyRoomUpdate } from "./room";
+import { applyRoomUpdate, getVoteKeyForUser } from "./room";
 import type { RoomData, WebSocketMessage } from "../types";
 
 const createBaseRoom = (): RoomData => ({
@@ -292,5 +292,20 @@ describe("applyRoomUpdate", () => {
       const result = applyRoomUpdate(room, message);
       expect(result?.gameSession?.codenamesKnownBlockerIndex).toBe(5);
     });
+  });
+});
+
+describe("getVoteKeyForUser", () => {
+  it("uses the real name when votes are not anonymised", () => {
+    const room = createBaseRoom();
+
+    expect(getVoteKeyForUser(room, "Bob")).toBe("Bob");
+  });
+
+  it("uses the anonymous key when participant names are hidden", () => {
+    const room = createBaseRoom();
+    room.settings.hideParticipantNames = true;
+
+    expect(getVoteKeyForUser(room, "Bob")).toBe("Anonymous 2");
   });
 });

@@ -1,3 +1,5 @@
+import { shouldAnonymizeVotes } from "@sprintjam/utils";
+
 import type { RoomData, WebSocketMessage, TicketQueueItem } from "../types";
 
 export const getAnonymousUserId = (
@@ -15,7 +17,7 @@ export const getVoteKeyForUser = (
   roomData: RoomData,
   userName: string,
 ): string => {
-  if (roomData.settings.anonymousVotes) {
+  if (shouldAnonymizeVotes(roomData.settings)) {
     return getAnonymousUserId(roomData, userName);
   }
   return userName;
