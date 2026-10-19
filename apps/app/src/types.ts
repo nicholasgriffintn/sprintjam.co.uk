@@ -181,6 +181,13 @@ interface WebSocketPayloads {
   newModerator: {
     moderator: string;
   };
+  moderatorHandoverPending: {
+    moderator: string;
+    handoverAt: number;
+  };
+  moderatorHandoverCancelled: {
+    moderator: string;
+  };
   settingsUpdated: {
     settings: RoomSettings;
   };

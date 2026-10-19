@@ -61,6 +61,7 @@ import {
   handleSubmitGameMove as handleSubmitGameMoveHandler,
 } from "./games";
 import { readRoomData } from "./room-helpers";
+import type { PendingModeratorHandover } from "./moderator-handover";
 import { normalizeRoomData } from "../../lib/room-data";
 import { PlanningPokerJudge } from "../../lib/planning-poker-judge";
 
@@ -70,6 +71,7 @@ export class PlanningRoom implements PlanningRoomHttpContext {
   sessions: Map<CfWebSocket, SessionInfo>;
   judge: PlanningPokerJudge;
   repository: PlanningRoomRepository;
+  pendingModeratorHandover: PendingModeratorHandover | null = null;
 
   constructor(state: DurableObjectState, env: RoomWorkerEnv) {
     this.state = state;

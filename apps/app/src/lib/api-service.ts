@@ -215,6 +215,8 @@ export function connectToRoom(
           case "showVotes":
           case "resetVotes":
           case "newModerator":
+          case "moderatorHandoverPending":
+          case "moderatorHandoverCancelled":
           case "settingsUpdated":
           case "roomStatusUpdated":
           case "judgeScoreUpdated":
