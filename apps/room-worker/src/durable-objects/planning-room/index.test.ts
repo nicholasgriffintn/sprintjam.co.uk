@@ -1383,6 +1383,7 @@ describe("PlanningRoom critical flows", () => {
       clearStructuredVotes: vi.fn(),
       setShowVotes: vi.fn(),
       setJudgeState: vi.fn(),
+      updateTimerConfig: vi.fn(),
     } as unknown as PlanningRoom["repository"];
 
     room.repository = repository;
