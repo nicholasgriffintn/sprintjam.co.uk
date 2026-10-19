@@ -8,6 +8,11 @@ import {
   anonymizeRoomData,
   findCanonicalUserName,
 } from "../../lib/room-data";
+import {
+  cancelModeratorHandover,
+  scheduleModeratorHandover,
+  toModeratorHandoverPendingMessage,
+} from "./moderator-handover";
 
 const COMPLETED_ROOM_ALLOWED_MESSAGE_TYPES: Set<string> = new Set([
   "completeSession",
@@ -47,19 +52,7 @@ async function markDisconnectedIfLastSession(
     userName === latestRoomData.moderator &&
     latestRoomData.settings.autoHandoverModerator
   ) {
-    const connectedUsers = latestRoomData.users
-      .filter((user) => latestRoomData.connectedUsers[user])
-      .sort((a, b) => a.localeCompare(b));
-
-    if (connectedUsers.length > 0) {
-      latestRoomData.moderator = connectedUsers[0];
-      room.repository.setModerator(latestRoomData.moderator);
-
-      room.broadcast({
-        type: "newModerator",
-        moderator: latestRoomData.moderator,
-      });
-    }
+    scheduleModeratorHandover(room, latestRoomData);
   }
 }
 
@@ -160,12 +153,22 @@ export async function handleSession(
     });
   }
 
+  cancelModeratorHandover(room, canonicalUserName);
+
   webSocket.send(
     JSON.stringify({
       type: "initialize",
       roomData: anonymizeRoomData(freshRoomData ?? roomData),
     }),
   );
+
+  if (room.pendingModeratorHandover) {
+    webSocket.send(
+      JSON.stringify(
+        toModeratorHandoverPendingMessage(room.pendingModeratorHandover),
+      ),
+    );
+  }
 
   webSocket.addEventListener("message", async (msg) => {
     try {

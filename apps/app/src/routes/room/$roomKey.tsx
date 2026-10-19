@@ -19,6 +19,7 @@ import { RoomGuidancePanel } from "@/components/room/RoomGuidancePanel";
 import { RoomModals } from "@/components/room/RoomModals";
 import { useConsensusCelebration } from "@/hooks/useConsensusCelebration";
 import { useLinkedWorkspaceSession } from "@/hooks/useLinkedWorkspaceSession";
+import { useModeratorHandoverNotice } from "@/hooks/useModeratorHandoverNotice";
 import { useRecoveryPasskeyNotice } from "@/hooks/useRecoveryPasskeyNotice";
 import { useRoomGameOverlay } from "@/hooks/useRoomGameOverlay";
 import { useRoomStats } from "@/hooks/useRoomStats";
@@ -107,6 +108,8 @@ const RoomContent = ({
     userName: name,
     enabled: isModeratorView && !roomData.settings.autoHandoverModerator,
   });
+
+  useModeratorHandoverNotice(name);
 
   const [isQueueModalOpen, setIsQueueModalOpen] = useState(false);
   const [isSummaryOpen, setIsSummaryOpen] = useState(false);
