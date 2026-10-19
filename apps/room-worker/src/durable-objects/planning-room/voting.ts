@@ -1,6 +1,5 @@
 import type { ExtraVoteOption, StructuredVote } from "@sprintjam/types";
 
-import { ensureTimerState, calculateTimerSeconds } from "../../lib/timer";
 import type { PlanningRoom } from ".";
 import {
   appendRoundHistory,
@@ -8,6 +7,7 @@ import {
   getRoundHistoryWithPrivacy,
   resetVotingState,
 } from "./room-helpers";
+import { resetRoundCountdownIfEnabled } from "./timer";
 import { determineRoomPhase } from "../../lib/room-phase";
 import {
   getAnonymousUserId,
@@ -293,19 +293,7 @@ export async function handleResetVotes(room: PlanningRoom, userName: string) {
     roundHistory: getRoundHistoryWithPrivacy(roomData),
   });
 
-  const timerState = ensureTimerState(roomData);
-  if (timerState.autoResetOnVotesReset) {
-    const now = Date.now();
-    const currentSeconds = calculateTimerSeconds(timerState, now);
-    timerState.roundAnchorSeconds = currentSeconds;
-    room.repository.updateTimerConfig({
-      roundAnchorSeconds: currentSeconds,
-    });
-    room.broadcast({
-      type: "timerUpdated",
-      timerState,
-    });
-  }
+  resetRoundCountdownIfEnabled(room, roomData);
 
   const shouldGenerateMusic =
     previousPhase !== newPhase &&
