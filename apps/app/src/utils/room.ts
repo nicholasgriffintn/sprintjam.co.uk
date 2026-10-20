@@ -96,6 +96,22 @@ export function applyRoomUpdate(
       const { user, isSpectator, users, spectators } = message;
       if (!user || typeof isSpectator !== "boolean") return prev;
 
+      const sharedFields = {
+        users: users ?? prev.users,
+        spectators:
+          spectators && spectators.length > 0 ? spectators : undefined,
+        votingCompletion: message.votingCompletion ?? prev.votingCompletion,
+      };
+
+      if (message.votes) {
+        return {
+          ...prev,
+          ...sharedFields,
+          votes: message.votes,
+          structuredVotes: message.structuredVotes,
+        };
+      }
+
       const updatedVotes = { ...prev.votes };
       let updatedStructuredVotes = prev.structuredVotes;
 
@@ -113,9 +129,7 @@ export function applyRoomUpdate(
 
       return {
         ...prev,
-        users: users ?? prev.users,
-        spectators:
-          spectators && spectators.length > 0 ? spectators : undefined,
+        ...sharedFields,
         votes: updatedVotes,
         structuredVotes: updatedStructuredVotes,
       };

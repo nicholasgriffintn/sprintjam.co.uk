@@ -164,6 +164,9 @@ interface WebSocketPayloads {
     isSpectator: boolean;
     users: string[];
     spectators: string[];
+    votes?: RoomData["votes"];
+    structuredVotes?: RoomData["structuredVotes"];
+    votingCompletion?: VotingCompletion;
   };
   vote: {
     user: string;

@@ -130,6 +130,34 @@ describe("applyRoomUpdate", () => {
     });
   });
 
+  describe("spectatorStatusChanged messages", () => {
+    it("replaces votes and completion with the server snapshot", () => {
+      const room = createBaseRoom();
+      room.settings.anonymousVotes = true;
+      room.votes = { "Anonymous 1": 3, "Anonymous 2": 5 };
+      const votingCompletion: VotingCompletion = {
+        allVotesComplete: true,
+        completedCount: 1,
+        totalCount: 1,
+      };
+
+      const result = applyRoomUpdate(room, {
+        type: "spectatorStatusChanged",
+        user: "Alice",
+        isSpectator: true,
+        users: ["Bob"],
+        spectators: ["Alice"],
+        votes: { "Anonymous 1": 5 },
+        votingCompletion,
+      });
+
+      expect(result?.users).toEqual(["Bob"]);
+      expect(result?.spectators).toEqual(["Alice"]);
+      expect(result?.votes).toEqual({ "Anonymous 1": 5 });
+      expect(result?.votingCompletion).toEqual(votingCompletion);
+    });
+  });
+
   describe("resetVotes messages", () => {
     it("updates votingCompletion when resetting votes", () => {
       const room = createBaseRoom();
