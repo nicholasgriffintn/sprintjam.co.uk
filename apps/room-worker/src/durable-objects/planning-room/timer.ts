@@ -1,3 +1,4 @@
+import type { RoomData } from "@sprintjam/types";
 import {
   MAX_TIMER_DURATION_SECONDS,
   MIN_TIMER_DURATION_SECONDS,
@@ -6,6 +7,26 @@ import {
 import { calculateTimerSeconds, ensureTimerState } from "../../lib/timer";
 
 import type { PlanningRoom } from ".";
+
+export function resetRoundCountdownIfEnabled(
+  room: PlanningRoom,
+  roomData: RoomData,
+) {
+  const timerState = ensureTimerState(roomData);
+  if (!timerState.autoResetOnVotesReset) {
+    return;
+  }
+
+  const currentSeconds = calculateTimerSeconds(timerState, Date.now());
+  timerState.roundAnchorSeconds = currentSeconds;
+  room.repository.updateTimerConfig({
+    roundAnchorSeconds: currentSeconds,
+  });
+  room.broadcast({
+    type: "timerUpdated",
+    timerState,
+  });
+}
 
 export async function handleStartTimer(room: PlanningRoom, userName: string) {
   const roomData = await room.getRoomData();

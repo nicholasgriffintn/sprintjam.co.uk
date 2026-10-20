@@ -11,6 +11,7 @@ import {
   resetVotingState,
   shouldAnonymizeVotes,
 } from "./room-helpers";
+import { resetRoundCountdownIfEnabled } from "./timer";
 
 export async function handleSelectTicket(
   room: PlanningRoom,
@@ -90,6 +91,8 @@ export async function handleSelectTicket(
     queue: updatedQueue,
     roundHistory: getRoundHistoryWithPrivacy(roomData),
   });
+
+  resetRoundCountdownIfEnabled(room, roomData);
 }
 
 export async function handleNextTicket(room: PlanningRoom, userName: string) {
@@ -154,6 +157,8 @@ export async function handleNextTicket(room: PlanningRoom, userName: string) {
     queue: updatedQueue,
     roundHistory: getRoundHistoryWithPrivacy(roomData),
   });
+
+  resetRoundCountdownIfEnabled(room, roomData);
 }
 
 export async function handleAddTicket(
