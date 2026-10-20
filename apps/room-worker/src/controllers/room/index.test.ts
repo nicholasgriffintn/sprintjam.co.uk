@@ -144,6 +144,24 @@ describe("planning-room-http join flow", () => {
     const payload = (await response.json()) as any;
     expect(payload.success).toBe(true);
   });
+
+  it("does not reveal who cast which vote when votes are anonymous", async () => {
+    baseRoom.users = ["Alice", "Bob"];
+    baseRoom.connectedUsers = { Alice: true, Bob: false };
+    baseRoom.votes = { Alice: "5" };
+    baseRoom.settings.anonymousVotes = true;
+    const { ctx } = makeContext({ roomData: baseRoom });
+
+    const response = (await handleHttpRequest(
+      ctx,
+      buildJoinRequest({ name: "Bob" }),
+    )) as Response;
+
+    expect(response.status).toBe(200);
+    const payload = (await response.json()) as any;
+    expect(payload.room.votes).toEqual({ "Anonymous 1": "5" });
+    expect(payload.room.passcodeHash).toBeUndefined();
+  });
 });
 
 describe("planning-room-http permissions and state updates", () => {

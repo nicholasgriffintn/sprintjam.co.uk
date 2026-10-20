@@ -12,11 +12,11 @@ import type { Request as CfRequest } from "@cloudflare/workers-types";
 
 import type { CfResponse, PlanningRoomHttpContext } from "./types";
 import {
+  anonymizeRoomData,
   assignUserAvatar,
   findCanonicalUserName,
   markUserConnection,
   normalizeRoomData,
-  sanitizeRoomData,
 } from "../../lib/room-data";
 
 export async function handleJoin(
@@ -133,7 +133,7 @@ export async function handleJoin(
   return new Response(
     JSON.stringify({
       success: true,
-      room: sanitizeRoomData(updatedRoomData),
+      room: anonymizeRoomData(updatedRoomData),
       defaults,
       recoveryPasskey,
     }),
