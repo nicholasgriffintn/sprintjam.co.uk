@@ -283,7 +283,7 @@ export const ActiveRoomContent = ({
                   }
                   users={roomData.users}
                   currentUserName={name}
-                  isAnonymousVoting={roomData.settings.anonymousVotes}
+                  currentUserVoteKey={getVoteKeyForUser(roomData, name)}
                 />
               </motion.div>
             </SurfaceCard>

@@ -1,4 +1,8 @@
-import type { VoteOptionMetadata, VotingCriterion } from "@sprintjam/types";
+import type {
+  RoomSettings,
+  VoteOptionMetadata,
+  VotingCriterion,
+} from "@sprintjam/types";
 
 import { generateColorFromValue, generateColorFromString } from "./colors";
 import { SPECIAL_COLORS } from "./config/constants";
@@ -158,4 +162,10 @@ export function setStructuredVotingCriterionEnabled(
       (criterion) => criterion.id,
     ).filter((id) => currentIds.has(id)),
   });
+}
+
+export function shouldAnonymizeVotes(
+  settings: Pick<RoomSettings, "anonymousVotes" | "hideParticipantNames">,
+): boolean {
+  return Boolean(settings.anonymousVotes || settings.hideParticipantNames);
 }

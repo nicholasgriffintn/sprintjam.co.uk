@@ -5,17 +5,17 @@ import type {
   SessionRoundVote,
   TicketQueueWithVotes,
 } from "@sprintjam/types";
-import { postRoundStats, generateID } from "@sprintjam/utils";
+import {
+  postRoundStats,
+  generateID,
+  shouldAnonymizeVotes as shouldAnonymizeVotesForSettings,
+} from "@sprintjam/utils";
 
 import type { PlanningRoom } from ".";
 import { getAnonymousUserId, remapRoundHistory } from "../../lib/room-data";
 
 export function shouldAnonymizeVotes(roomData: RoomData): boolean {
-  return (
-    roomData.settings.anonymousVotes ||
-    roomData.settings.hideParticipantNames ||
-    false
-  );
+  return shouldAnonymizeVotesForSettings(roomData.settings);
 }
 
 export function getQueueWithPrivacy(
