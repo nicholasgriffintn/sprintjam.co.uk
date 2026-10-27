@@ -1,7 +1,16 @@
+import * as Sentry from "@sentry/react";
 import { startTransition, StrictMode } from "react";
 import { hydrateRoot } from "react-dom/client";
 import type { ClientOnErrorFunction } from "react-router";
 import { HydratedRouter } from "react-router/dom";
+
+import { SENTRY_DSN } from "./constants";
+
+Sentry.init({
+  dsn: SENTRY_DSN,
+  environment: import.meta.env.MODE,
+  enabled: import.meta.env.PROD,
+});
 
 const onError: ClientOnErrorFunction = (
   error,
@@ -14,6 +23,10 @@ const onError: ClientOnErrorFunction = (
     params,
     componentStack: errorInfo?.componentStack ?? undefined,
     error,
+  });
+  Sentry.captureException(error, {
+    tags: { source: "react-router-client" },
+    extra: { routePattern: pattern || undefined },
   });
 };
 

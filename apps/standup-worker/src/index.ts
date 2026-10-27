@@ -9,7 +9,7 @@ import { handleRequest } from "./routes/router";
 import { StandupRoom } from "./durable-objects/standup-room";
 
 const SENTRY_DSN =
-  "https://bd52ec8b408a48558cd07219756855a3@ingest.bitwobbly.com/17";
+  "https://f2c93a8ca67107653ee80e0da0847428@o4512330606247936.ingest.de.sentry.io/4512330624467024";
 
 export default Sentry.withSentry<StandupWorkerEnv, unknown>(
   (env) => ({
@@ -23,7 +23,8 @@ export default Sentry.withSentry<StandupWorkerEnv, unknown>(
     beforeSendTransaction() {
       return null;
     },
-    enabled: env.ENVIRONMENT === "production",
+    environment: env.ENVIRONMENT,
+    enabled: env.ENVIRONMENT !== "development",
   }),
   {
     async fetch(

@@ -5,7 +5,7 @@ import { handleRequest } from "./routes/router";
 import { WorkspaceAuthRepository } from "./repositories/workspace-auth";
 
 const SENTRY_DSN =
-  "https://95460a28df42464d8860431ec35767c7@ingest.bitwobbly.com/12";
+  "https://85ac63cba7886ade6ba6c73fbfbb6603@o4512330606247936.ingest.de.sentry.io/4512330617716816";
 
 export default Sentry.withSentry<AuthWorkerEnv, unknown>(
   (env) => ({
@@ -19,7 +19,8 @@ export default Sentry.withSentry<AuthWorkerEnv, unknown>(
     beforeSendTransaction() {
       return null;
     },
-    enabled: env.ENVIRONMENT === "production",
+    environment: env.ENVIRONMENT,
+    enabled: env.ENVIRONMENT !== "development",
   }),
   {
     async fetch(request: Request, env: AuthWorkerEnv): Promise<Response> {

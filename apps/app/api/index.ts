@@ -118,7 +118,7 @@ async function handleRequest(
 
 export default Sentry.withSentry<DispatchWorkerEnv, unknown>(
   (env) => ({
-    dsn: "https://d2b3ceb688e14058bf82a71ed27951c3@ingest.bitwobbly.com/11",
+    dsn: "https://0b2449c78219ad9b18859ecd35770126@o4512330606247936.ingest.de.sentry.io/4512330615357520",
     sampleRate: 1,
     enableLogs: false,
     tracesSampleRate: 0,
@@ -128,7 +128,8 @@ export default Sentry.withSentry<DispatchWorkerEnv, unknown>(
     beforeSendTransaction() {
       return null;
     },
-    enabled: env.ENVIRONMENT === "production",
+    environment: env.ENVIRONMENT,
+    enabled: env.ENVIRONMENT !== "development",
   }),
   {
     // @ts-expect-error - types are weird

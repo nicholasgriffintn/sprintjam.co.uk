@@ -9,7 +9,7 @@ import { handleRequest } from "./routes/router";
 import { WheelRoom } from "./durable-objects/wheel-room";
 
 const SENTRY_DSN =
-  "https://8bf80480a2674ad9ac27e2b5572016f7@ingest.bitwobbly.com/14";
+  "https://d15ad0d836cc2c10cb3f75797fec5a76@o4512330606247936.ingest.de.sentry.io/4512330623156304";
 
 export default Sentry.withSentry<WheelWorkerEnv, unknown>(
   (env) => ({
@@ -23,7 +23,8 @@ export default Sentry.withSentry<WheelWorkerEnv, unknown>(
     beforeSendTransaction() {
       return null;
     },
-    enabled: env.ENVIRONMENT === "production",
+    environment: env.ENVIRONMENT,
+    enabled: env.ENVIRONMENT !== "development",
   }),
   {
     async fetch(request: CfRequest, env: WheelWorkerEnv): Promise<CfResponse> {

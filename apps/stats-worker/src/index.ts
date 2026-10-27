@@ -8,7 +8,7 @@ import * as Sentry from "@sentry/cloudflare";
 import { handleRequest } from "./routes/router";
 
 const SENTRY_DSN =
-  "https://c76d60afe2c74fa8a3b1f06ef1307b82@ingest.bitwobbly.com/13";
+  "https://8fc7345ff9c17e76e16feadc24a90e27@o4512330606247936.ingest.de.sentry.io/4512330621321296";
 
 export default Sentry.withSentry<StatsWorkerEnv, unknown>(
   (env) => ({
@@ -22,7 +22,8 @@ export default Sentry.withSentry<StatsWorkerEnv, unknown>(
     beforeSendTransaction() {
       return null;
     },
-    enabled: env.ENVIRONMENT === "production",
+    environment: env.ENVIRONMENT,
+    enabled: env.ENVIRONMENT !== "development",
   }),
   {
     async fetch(request: CfRequest, env: StatsWorkerEnv): Promise<CfResponse> {

@@ -30,7 +30,7 @@ export const RETRO_WS_BASE_URL = `${BASE_WS_WITH_PROTOCOL}/ws/retro`;
 
 export const SENTRY_DSN =
   import.meta.env.VITE_SENTRY_DSN ||
-  "https://ae2cfc4ec7ef4879be068f2fc80e54c0@ingest.bitwobbly.com/10";
+  "https://0dac638de50b12b4c516c57deefae2bb@o4512330606247936.ingest.de.sentry.io/4512330627350608";
 
 export const SITE_NAME = "SprintJam";
 
